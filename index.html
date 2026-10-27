@@ -1,0 +1,2478 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tuju Selipar 3D: Pembelajaran Bahasa Cina Unit 12</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Fredoka', 'Noto Sans SC', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #0f172a;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+            width: 100vw;
+            height: 100vh;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        .btn-3d {
+            transition: all 0.12s ease;
+            box-shadow: 0 6px 0 #b45309, 0 10px 18px rgba(0,0,0,0.35);
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b45309, 0 4px 8px rgba(0,0,0,0.35);
+        }
+        .btn-3d-emerald {
+            transition: all 0.12s ease;
+            box-shadow: 0 6px 0 #047857, 0 10px 15px rgba(0,0,0,0.28);
+        }
+        .btn-3d-emerald:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #047857, 0 4px 8px rgba(0,0,0,0.28);
+        }
+        /* Hold Throw Round Button */
+        .throw-round-btn {
+            transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+            box-shadow: 0 10px 0 #b45309, 0 15px 30px rgba(0,0,0,0.5);
+            touch-action: none;
+        }
+        .throw-round-btn.holding {
+            transform: scale(0.92) translateY(6px);
+            box-shadow: 0 4px 0 #b45309, 0 8px 15px rgba(245, 158, 11, 0.6);
+        }
+        rt {
+            font-size: 0.55em;
+            color: #475569;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .option-card:hover rt {
+            color: #1d4ed8;
+        }
+        /* Custom Scrollbar for Modals */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Scene Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- =====================================================================
+         SKRIN PERMULAAN: ISI NAMA MURID & BINA KARAKTER 3D (DENGAN PRATONTON 3D LIVE)
+    ====================================================================== -->
+    <div id="builder-modal" class="fixed inset-0 z-50 flex items-center justify-center md:justify-end p-3 sm:p-6 bg-slate-950/35 pointer-events-none">
+        <!-- Badge Penunjuk Pratonton Karakter 3D di sebelah Kiri -->
+        <div class="hidden md:flex flex-col items-center mr-auto ml-8 lg:ml-20 bg-slate-900/80 backdrop-blur-md text-white px-5 py-3.5 rounded-3xl border-2 border-amber-400 shadow-2xl">
+            <span id="i18n-preview-title" class="text-xs font-extrabold uppercase tracking-wider text-amber-300">✨ Live 3D Character Preview</span>
+            <span id="i18n-preview-sub" class="text-sm font-bold text-slate-200 mt-0.5">Watch your character update live on the field!</span>
+        </div>
+
+        <div class="interactive bg-white/95 backdrop-blur-md w-full max-w-md rounded-3xl shadow-2xl border-4 border-amber-400 overflow-hidden flex flex-col max-h-[92vh]">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-white flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shadow-inner">
+                        🩴
+                    </div>
+                    <div>
+                        <h1 id="i18n-builder-title" class="text-lg sm:text-xl font-black leading-tight">Build 3D Character</h1>
+                        <p id="i18n-builder-sub" class="text-xs font-semibold text-amber-100">Chinese Unit 12: 饮食 (Food & Drinks)</p>
+                    </div>
+                </div>
+                <!-- Language Switcher inside Builder -->
+                <button type="button" onclick="toggleLanguage()" class="bg-slate-900/30 hover:bg-slate-900/50 text-white px-3 py-1.5 rounded-xl text-xs font-black border border-white/30 transition cursor-pointer shrink-0">
+                    🌐 <span class="lang-toggle-label">EN | BM</span>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <div class="p-4 sm:p-5 overflow-y-auto space-y-3.5">
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-2.5 text-xs text-amber-900 font-semibold flex items-center gap-2">
+                    <span class="text-lg">👀</span>
+                    <span id="i18n-builder-tip">Your 3D model is shown live! Customize your style before starting.</span>
+                </div>
+
+                <!-- Input Nama Murid -->
+                <div>
+                    <label id="i18n-lbl-name" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                        1. Student Name:
+                    </label>
+                    <input id="input-player-name" type="text" maxlength="22" placeholder="e.g., Ahmad / Mei Ling" 
+                        class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-slate-300 focus:border-amber-500 focus:outline-none text-sm sm:text-base font-bold text-slate-800 bg-white shadow-inner"
+                        oninput="updateCharacterPreview()" />
+                </div>
+
+                <!-- Pilihan Warna Baju Jersi -->
+                <div>
+                    <label id="i18n-lbl-shirt" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                        2. 3D Jersey Color:
+                    </label>
+                    <div id="shirt-color-options" class="flex flex-wrap gap-2">
+                        <button type="button" onclick="selectCharColor('shirt', 0xef4444, this)" class="color-btn-shirt w-9 h-9 rounded-xl bg-red-500 border-4 border-slate-900 shadow-md transition transform scale-110"></button>
+                        <button type="button" onclick="selectCharColor('shirt', 0x3b82f6, this)" class="color-btn-shirt w-9 h-9 rounded-xl bg-blue-500 border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('shirt', 0x10b981, this)" class="color-btn-shirt w-9 h-9 rounded-xl bg-emerald-500 border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('shirt', 0xf59e0b, this)" class="color-btn-shirt w-9 h-9 rounded-xl bg-amber-500 border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('shirt', 0x8b5cf6, this)" class="color-btn-shirt w-9 h-9 rounded-xl bg-violet-500 border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('shirt', 0xec4899, this)" class="color-btn-shirt w-9 h-9 rounded-xl bg-pink-500 border-2 border-white shadow-md transition"></button>
+                    </div>
+                </div>
+
+                <!-- Pilihan Warna Kulit -->
+                <div>
+                    <label id="i18n-lbl-skin" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                        3. Character Skin Tone:
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="selectCharColor('skin', 0xfde68a, this)" class="color-btn-skin w-9 h-9 rounded-xl bg-[#fde68a] border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('skin', 0xfbbf24, this)" class="color-btn-skin w-9 h-9 rounded-xl bg-[#fbbf24] border-4 border-slate-900 shadow-md transition transform scale-110"></button>
+                        <button type="button" onclick="selectCharColor('skin', 0xd97706, this)" class="color-btn-skin w-9 h-9 rounded-xl bg-[#d97706] border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('skin', 0x92400e, this)" class="color-btn-skin w-9 h-9 rounded-xl bg-[#92400e] border-2 border-white shadow-md transition"></button>
+                    </div>
+                </div>
+
+                <!-- Pilihan Gaya Kepala / Topi -->
+                <div>
+                    <label id="i18n-lbl-hat" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                        4. Head Style / 3D Accessory:
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="i18n-hat-cap" type="button" onclick="selectHatStyle('cap', this)" class="hat-btn py-2 px-2.5 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-900 font-bold text-xs shadow-sm">
+                            🧢 Sports Cap
+                        </button>
+                        <button id="i18n-hat-hair" type="button" onclick="selectHatStyle('hair', this)" class="hat-btn py-2 px-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-700 font-bold text-xs shadow-sm">
+                            💇 Spiky Hair
+                        </button>
+                        <button id="i18n-hat-band" type="button" onclick="selectHatStyle('headband', this)" class="hat-btn py-2 px-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-700 font-bold text-xs shadow-sm">
+                            🎽 Headband
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pilihan Warna Selipar Pelontar -->
+                <div>
+                    <label id="i18n-lbl-slipper" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                        5. Your Striker Slipper Color:
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="selectCharColor('slipper', 0x2563eb, this)" class="color-btn-slipper w-9 h-9 rounded-xl bg-blue-600 border-4 border-slate-900 shadow-md transition transform scale-110"></button>
+                        <button type="button" onclick="selectCharColor('slipper', 0xdc2626, this)" class="color-btn-slipper w-9 h-9 rounded-xl bg-red-600 border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('slipper', 0x16a34a, this)" class="color-btn-slipper w-9 h-9 rounded-xl bg-green-600 border-2 border-white shadow-md transition"></button>
+                        <button type="button" onclick="selectCharColor('slipper', 0xeab308, this)" class="color-btn-slipper w-9 h-9 rounded-xl bg-yellow-500 border-2 border-white shadow-md transition"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Start Button -->
+            <div class="p-4 bg-slate-100 border-t border-slate-200 flex justify-end">
+                <button id="btn-start-game" type="button" onclick="startGameFromBuilder()" class="w-full btn-3d bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-900 font-black text-base sm:text-lg py-3 rounded-2xl border-2 border-amber-200 cursor-pointer">
+                    🚀 START GAME (8 QUESTIONS)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         LAPISAN UI UTAMA PERMAINAN (HUD & KAWALAN AIMING/KUASA)
+    ====================================================================== -->
+    <div class="ui-layer flex flex-col justify-between p-2.5 sm:p-5">
+        
+        <!-- Top HUD Navigation & Stats -->
+        <header class="flex flex-wrap justify-between items-center gap-2 w-full max-w-6xl mx-auto">
+            <!-- Game & Player Branding -->
+            <div class="interactive flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border-2 border-amber-400">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white text-2xl shadow-inner">
+                    🩴
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 id="i18n-hud-title" class="text-sm sm:text-lg font-black text-slate-800 leading-tight">Tuju Selipar 3D</h1>
+                        <span id="hud-player-badge" class="bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-extrabold px-2 py-0.5 rounded-full">
+                            👤 Student
+                        </span>
+                    </div>
+                    <p id="i18n-hud-sub" class="text-[11px] font-semibold text-slate-500">3-Slipper Pyramid • Chinese Unit 12</p>
+                </div>
+            </div>
+
+            <!-- Score, Round (1/8) & Controls -->
+            <div class="interactive flex items-center gap-1.5 sm:gap-2">
+                <!-- Language Switcher Button -->
+                <button type="button" onclick="toggleLanguage()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 py-2 rounded-2xl shadow-lg text-xs font-black flex items-center gap-1 transition cursor-pointer" title="Switch Language (EN / BM)">
+                    <span>🌐</span>
+                    <span class="lang-toggle-label">EN</span>
+                </button>
+
+                <button type="button" onclick="openBuilderModal()" class="bg-slate-800/90 hover:bg-slate-700 text-white px-3 py-2 rounded-2xl shadow-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer" title="Customize Character">
+                    <span>🧑</span>
+                    <span id="i18n-btn-char" class="hidden sm:inline">Character</span>
+                </button>
+
+                <div class="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-lg border-2 border-sky-400 text-center">
+                    <span id="i18n-lbl-round" class="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">Question</span>
+                    <span id="hud-round" class="text-base sm:text-xl font-black text-slate-800">1 / 8</span>
+                </div>
+
+                <div class="bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-lg border-2 border-emerald-400 text-center min-w-[85px]">
+                    <span id="i18n-lbl-score" class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Score</span>
+                    <span id="hud-score" class="text-base sm:text-xl font-black text-emerald-600">0</span>
+                </div>
+
+                <button type="button" onclick="toggleVocabModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2 sm:px-3.5 sm:py-2 rounded-2xl shadow-lg font-bold text-xs flex items-center gap-1 transition cursor-pointer">
+                    <span>📖</span>
+                    <span id="i18n-btn-notes" class="hidden md:inline">Unit 12 Notes</span>
+                </button>
+
+                <button id="btn-audio-toggle" type="button" onclick="toggleMute()" class="bg-slate-800/90 hover:bg-slate-700 text-white p-2 rounded-2xl shadow-lg text-sm transition cursor-pointer" title="Sound">
+                    🔊
+                </button>
+            </div>
+        </header>
+
+        <!-- Center Status Banner (Transient Feedback) -->
+        <div id="status-banner" class="self-center my-auto pointer-events-none transition-all duration-300 opacity-0 scale-75 transform">
+            <div id="status-banner-inner" class="bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-3xl shadow-2xl border-4 border-amber-400 text-center">
+                <div id="status-title" class="text-2xl sm:text-4xl font-black text-amber-300 mb-1">GREAT THROW!</div>
+                <div id="status-subtitle" class="text-sm sm:text-lg font-semibold text-white">3 Slippers Knocked Down (+300 Base Points)</div>
+            </div>
+        </div>
+
+        <!-- Bottom Phase 1 Controls: Direct Screen Aiming + Hold & Release Round Slipper Button -->
+        <div id="aim-controls" class="w-full max-w-xl mx-auto flex flex-col items-center justify-end pb-2 sm:pb-4 pointer-events-none">
+            
+            <!-- Arahan Seret Skrin Untuk Sasaran & Bar Kuasa Lontaran -->
+            <div class="bg-slate-900/85 backdrop-blur-md border-2 border-slate-700 rounded-2xl px-4 py-2.5 shadow-xl text-white mb-3 w-full max-w-md">
+                <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                    <span class="text-sky-300 flex items-center gap-1">
+                        👆 <span id="i18n-drag-aim">Drag Screen to Aim:</span> <strong id="aim-label-val" class="text-white">Center (0°)</strong>
+                    </span>
+                    <span id="power-label-val" class="text-amber-300 font-extrabold">
+                        ⚡ Power: Ready (Hold Button)
+                    </span>
+                </div>
+
+                <!-- Bar Visual Kuasa Balingan (Aktif Semasa Hold Butang Selipar) -->
+                <div class="relative w-full h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-600 shadow-inner">
+                    <!-- Penanda Zon Hijau Optimum (65% - 85%) -->
+                    <div class="absolute top-0 bottom-0 left-[65%] w-[20%] bg-emerald-500/35 border-x-2 border-emerald-400 z-10 flex items-center justify-center">
+                        <span id="i18n-sweet-spot" class="text-[9px] font-black text-emerald-200 uppercase tracking-tighter">OPTIMAL</span>
+                    </div>
+                    <!-- Bar Pengisi Kuasa Semasa Hold -->
+                    <div id="power-charge-fill" class="h-full w-0 bg-gradient-to-r from-amber-400 via-emerald-400 to-rose-500 transition-none"></div>
+                </div>
+            </div>
+
+            <!-- Butang Bulat Gambar Selipar (Hold & Lepas untuk Auto Baling) -->
+            <div class="flex flex-col items-center">
+                <button id="btn-throw" type="button"
+                    class="interactive throw-round-btn relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 border-4 border-white flex flex-col items-center justify-center cursor-pointer select-none group">
+                    <!-- Cincin Animasi Semasa Hold -->
+                    <div id="throw-pulse-ring" class="absolute -inset-2 rounded-full border-4 border-emerald-400 opacity-0 pointer-events-none transition-opacity"></div>
+                    
+                    <!-- Ikon / Grafik Selipar Jepun -->
+                    <svg class="w-11 h-11 sm:w-12 sm:h-12 drop-shadow-md transform -rotate-12 group-hover:scale-110 transition" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Tapak Selipar -->
+                        <path d="M20 8 C12 8, 10 22, 13 36 C15 48, 16 58, 28 58 C40 58, 41 48, 43 36 C46 22, 44 8, 36 8 Z" fill="#1e3a8a" stroke="#ffffff" stroke-width="3"/>
+                        <!-- Tali Y-Strap Selipar -->
+                        <path d="M28 20 L14 38 M28 20 L42 38 M28 15 L28 22" stroke="#facc15" stroke-width="4.5" stroke-linecap="round"/>
+                        <circle cx="28" cy="20" r="3.5" fill="#ffffff"/>
+                    </svg>
+                    <span id="btn-throw-text" class="text-[10px] sm:text-xs font-black text-slate-950 uppercase tracking-tight mt-0.5 leading-none">
+                        HOLD & RELEASE
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         FASA 2 MODAL: KUIZ TERJEMAHAN BAHASA CINA UNIT 12 (8 SOALAN BERBEZA)
+    ====================================================================== -->
+    <div id="quiz-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md">
+        <div class="interactive bg-white w-full max-w-2xl rounded-3xl shadow-2xl border-4 border-amber-400 overflow-hidden flex flex-col max-h-[94vh]">
+            
+            <!-- Modal Top Header: Throw Result & Base Score -->
+            <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 px-5 py-3.5 text-white flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <span id="quiz-shoe-badge" class="bg-white text-amber-700 font-black px-3 py-1 rounded-xl text-xs sm:text-sm shadow">
+                        🩴 3 Slippers Knocked Down!
+                    </span>
+                    <span id="quiz-progress-badge" class="bg-slate-900/30 text-white font-bold px-2.5 py-1 rounded-xl text-xs">
+                        Question 1 / 8
+                    </span>
+                </div>
+                <div class="bg-slate-900/30 px-3 py-1 rounded-xl border border-white/20 text-right">
+                    <span id="i18n-quiz-base-lbl" class="text-[10px] text-amber-100 block">Base Throw Score</span>
+                    <span id="quiz-base-points" class="text-sm sm:text-base font-black text-white">+300 Points</span>
+                </div>
+            </div>
+
+            <!-- Quiz Scrollable Content -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-4">
+                
+                <!-- TWO SEPARATE BOXES FOR QUESTION vs ENGLISH TRANSLATION (MENGIKUT ARAHAN) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    
+                    <!-- KOTAK 1: SOALAN BAHASA CINA (QUESTION BOX) -->
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col justify-between shadow-sm">
+                        <div class="flex items-center justify-between mb-1">
+                            <span id="quiz-category-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase bg-amber-200 text-amber-900">
+                                Chinese Question
+                            </span>
+                            <button type="button" onclick="speakCurrentQuestion()" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer" title="Listen">
+                                🔊 <span id="i18n-btn-listen">Listen</span>
+                            </button>
+                        </div>
+
+                        <div class="my-2 text-center">
+                            <p id="quiz-chinese-question" class="text-2xl sm:text-3xl font-black text-slate-800 leading-relaxed">
+                                <ruby>你<rt>Nǐ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>喝<rt>hē</rt></ruby><ruby>什<rt>shén</rt></ruby><ruby>么<rt>me</rt></ruby>？
+                            </p>
+                        </div>
+
+                        <p id="quiz-question-meaning" class="text-xs font-semibold text-amber-800 text-center bg-amber-100/80 py-1 px-2 rounded-lg">
+                            Question Meaning: "What do you want to drink?"
+                        </p>
+                    </div>
+
+                    <!-- KOTAK 2: TERJEMAHAN BAHASA INGGERIS (ENGLISH TRANSLATION PROMPT BOX - BERASINGAN) -->
+                    <div class="bg-sky-50 border-2 border-sky-300 rounded-2xl p-4 flex flex-col justify-between shadow-sm">
+                        <div class="flex items-center justify-between mb-1">
+                            <span id="i18n-eng-box-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase bg-sky-200 text-sky-900">
+                                🇬🇧 English Translation Box
+                            </span>
+                            <span id="quiz-target-icon" class="text-2xl">🥛</span>
+                        </div>
+
+                        <div class="my-2">
+                            <p id="i18n-translate- instruction" class="text-[11px] font-bold uppercase text-sky-700 tracking-wider mb-0.5">Translate into Chinese:</p>
+                            <p id="quiz-english-prompt" class="text-base sm:text-lg font-black text-slate-800 leading-snug">
+                                "What do you want to drink? I want to drink milk."
+                            </p>
+                        </div>
+
+                        <p id="quiz-malay-hint" class="text-xs font-semibold text-sky-800 bg-sky-100/80 py-1 px-2 rounded-lg">
+                            BM: Saya hendak minum susu.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div id="i18n-choose-instruction" class="text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
+                    👇 Choose the Correct Chinese Answer (with Pinyin):
+                </div>
+
+                <!-- 4 Multiple Choice Options Grid -->
+                <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Feedback & Next Question Button Box -->
+                <div id="quiz-feedback-box" class="hidden rounded-2xl p-4 border-2 transition-all">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 id="feedback-heading" class="text-base sm:text-lg font-black">✅ Correct! Score Doubled (x2)!</h3>
+                            <p id="feedback-detail" class="text-xs sm:text-sm font-medium mt-0.5"></p>
+                        </div>
+                        <button id="btn-next-round" type="button" onclick="proceedToNextRound()" class="btn-3d-emerald bg-emerald-500 hover:bg-emerald-400 text-white font-black px-6 py-3 rounded-xl text-sm sm:text-base whitespace-nowrap cursor-pointer shadow-lg">
+                            Next Question ➔
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL RUJUKAN NOTA KOSA KATA UNIT 12
+    ====================================================================== -->
+    <div id="vocab-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-md">
+        <div class="interactive bg-white w-full max-w-3xl rounded-3xl shadow-2xl border-4 border-indigo-500 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-indigo-600 px-6 py-4 text-white flex justify-between items-center">
+                <div>
+                    <h2 id="i18n-vocab-title" class="text-lg sm:text-xl font-bold">📖 Chinese Unit 12 Vocabulary List (8 Words)</h2>
+                    <p id="i18n-vocab-sub" class="text-xs text-indigo-200">Click any card to listen to the Mandarin pronunciation</p>
+                </div>
+                <button type="button" onclick="toggleVocabModal(false)" class="bg-indigo-800 hover:bg-indigo-700 text-white w-9 h-9 rounded-xl font-bold text-lg cursor-pointer">✕</button>
+            </div>
+
+            <div class="p-5 sm:p-6 overflow-y-auto space-y-5">
+                <!-- Core Sentence Patterns -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div onclick="speakMandarin('你要喝什么？我要喝牛奶。')" class="cursor-pointer bg-sky-50 hover:bg-sky-100 border-2 border-sky-200 rounded-2xl p-3.5 transition">
+                        <span id="i18n-pattern-drink" class="text-[11px] font-bold uppercase px-2 py-0.5 bg-sky-200 text-sky-800 rounded-md">Drink Pattern (喝 hē - Drink)</span>
+                        <p class="text-lg font-bold text-slate-800 mt-1.5">你要喝什么？ <span class="text-xs font-normal text-slate-500">(Nǐ yào hē shénme?)</span></p>
+                        <p class="text-xs text-slate-600">EN: What do you want to drink? | BM: Awak hendak minum apa?</p>
+                        <p class="text-base font-bold text-sky-700 mt-1">➔ 我要喝____ <span class="text-xs font-normal">(Wǒ yào hē...)</span></p>
+                    </div>
+
+                    <div onclick="speakMandarin('你要吃什么？我要吃面包。')" class="cursor-pointer bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 rounded-2xl p-3.5 transition">
+                        <span id="i18n-pattern-food" class="text-[11px] font-bold uppercase px-2 py-0.5 bg-amber-200 text-amber-800 rounded-md">Food Pattern (吃 chī - Eat)</span>
+                        <p class="text-lg font-bold text-slate-800 mt-1.5">你要吃什么？ <span class="text-xs font-normal text-slate-500">(Nǐ yào chī shénme?)</span></p>
+                        <p class="text-xs text-slate-600">EN: What do you want to eat? | BM: Awak hendak makan apa?</p>
+                        <p class="text-base font-bold text-amber-700 mt-1">➔ 我要吃____ <span class="text-xs font-normal">(Wǒ yào chī...)</span></p>
+                    </div>
+                </div>
+
+                <!-- 8 Vocabulary Cards Grid -->
+                <div id="vocab-list-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <div class="bg-slate-100 px-6 py-3 text-right border-t border-slate-200">
+                <button id="i18n-btn-close-notes" type="button" onclick="toggleVocabModal(false)" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2 rounded-xl text-sm cursor-pointer">
+                    Close Notes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         SKRIN TAMAT PERMAINAN: KAD SKOR MURID (BOLEH DISIMPAN) + LEADERBOARD
+    ====================================================================== -->
+    <div id="summary-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md">
+        <div class="interactive bg-white w-full max-w-4xl rounded-3xl shadow-2xl border-4 border-emerald-400 p-4 sm:p-6 overflow-y-auto max-h-[94vh]">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                
+                <!-- KOLUM KIRI (7 COL): KAD SKOR RASMI MURID & BUTANG MUAT TURUN PNG -->
+                <div class="lg:col-span-7 flex flex-col items-center">
+                    <div class="w-full bg-gradient-to-br from-amber-50 via-white to-emerald-50 border-4 border-amber-400 rounded-3xl p-4 sm:p-5 shadow-lg text-center relative overflow-hidden">
+                        <div class="flex items-center justify-between border-b-2 border-amber-200 pb-2.5 mb-3">
+                            <div class="flex items-center gap-2 text-left">
+                                <span class="text-2xl">🩴</span>
+                                <div>
+                                    <h3 id="i18n-card-header" class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">OFFICIAL SCORE CARD • UNIT 12</h3>
+                                    <p class="text-[11px] font-bold text-amber-700">Tuju Selipar 3D • 饮食 (Food & Drinks)</p>
+                                </div>
+                            </div>
+                            <span id="scorecard-date" class="text-[11px] font-bold bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full"></span>
+                        </div>
+
+                        <div class="w-14 h-14 mx-auto bg-amber-100 border-2 border-amber-300 rounded-2xl flex items-center justify-center text-3xl mb-2 shadow-inner">
+                            🏆
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-800">
+                            <span id="i18n-congrats">Congratulations</span>, <span id="summary-player-name" class="text-amber-600">Student</span>!
+                        </h2>
+                        <p id="i18n-summary-sub" class="text-xs text-slate-500 font-semibold mt-0.5">You have completed all 8 unique Unit 12 questions.</p>
+
+                        <!-- Kotak Skor & Ketepatan -->
+                        <div class="grid grid-cols-2 gap-3 my-4">
+                            <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3">
+                                <span id="i18n-total-score-lbl" class="text-[10px] font-extrabold uppercase text-emerald-700 tracking-wider block">Total Overall Score</span>
+                                <div id="final-score-display" class="text-3xl sm:text-4xl font-black text-emerald-600 my-0.5">4800</div>
+                                <span id="scorecard-rank-badge" class="text-[11px] font-bold text-emerald-800 bg-emerald-200/70 px-2 py-0.5 rounded-full">⭐ Master Striker</span>
+                            </div>
+
+                            <div class="bg-sky-50 border-2 border-sky-300 rounded-2xl p-3 flex flex-col justify-center">
+                                <span id="i18n-accuracy-lbl" class="text-[10px] font-extrabold uppercase text-sky-700 tracking-wider block">Quiz Accuracy</span>
+                                <div id="final-accuracy-number" class="text-2xl sm:text-3xl font-black text-sky-600 my-0.5">8 / 8</div>
+                                <span id="final-accuracy-display" class="text-[11px] font-bold text-slate-600 block">100% Correct</span>
+                            </div>
+                        </div>
+
+                        <!-- Kanvas Tersembunyi Untuk Jana Imej PNG Kad Skor Resolusi Tinggi -->
+                        <canvas id="scorecard-canvas" width="800" height="500" class="hidden"></canvas>
+
+                        <!-- Butang Simpan Kad Skor (Muat Turun PNG) -->
+                        <button id="btn-save-scorecard" type="button" onclick="downloadScoreCardPNG()" class="w-full btn-3d bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black py-3 px-4 rounded-2xl text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer border-2 border-amber-200">
+                            <span>📥</span>
+                            <span id="i18n-btn-save-card">Save Score Card (Download PNG)</span>
+                        </button>
+                    </div>
+
+                    <!-- Butang Ulang Kaji & Main Semula -->
+                    <div class="flex flex-col sm:flex-row gap-2.5 w-full mt-3">
+                        <button id="i18n-btn-review" type="button" onclick="toggleVocabModal(true)" class="flex-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+                            📖 Review Notes
+                        </button>
+                        <button id="i18n-btn-play-again" type="button" onclick="restartFullGame()" class="flex-1 btn-3d-emerald bg-emerald-500 hover:bg-emerald-400 text-white font-black py-3 rounded-2xl text-sm sm:text-base cursor-pointer">
+                            🔄 Play Again
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KOLUM KANAN (5 COL): PAPAN PENDAHULU (LEADERBOARD) -->
+                <div class="lg:col-span-5 bg-slate-900 text-white rounded-3xl p-4 sm:p-5 border-2 border-slate-700 flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🏅</span>
+                            <div>
+                                <h3 id="i18n-lb-title" class="text-sm sm:text-base font-black text-amber-300 uppercase tracking-wide">Top Leaderboard</h3>
+                                <p id="leaderboard-status-text" class="text-[11px] text-slate-400">Synced with Google Sheets</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="fetchLeaderboardData()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer" title="Refresh Leaderboard">
+                                🔄
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Senarai Kedudukan Murid -->
+                    <div id="leaderboard-list" class="space-y-2 overflow-y-auto max-h-[290px] pr-1 flex-1">
+                        <!-- Dipaparkan secara dinamik melalui JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /***********************************************************************
+         * TETAPAN INTEGRASI GOOGLE SHEETS (GOOGLE APPS SCRIPT WEB APP URL)
+         ***********************************************************************/
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhSTms-ZlR780CbJFtDt_hLSZ-b2QVhM7l6OduwCM2fKE3xlnoDHwTzxu5mLlQ4kCoiw/exec";
+
+        // Senarai Skor Tempatan (Dalam Memori Sesi) Sebagai Sandaran
+        let sessionLeaderboard = [
+            { name: "Mei Ling", score: 4400, accuracy: "8/8" },
+            { name: "Ahmad Daniel", score: 3800, accuracy: "7/8" },
+            { name: "Chong Wei", score: 3200, accuracy: "6/8" }
+        ];
+
+        /***********************************************************************
+         * 0. SISTEM DWIBAHASA (ENGLISH SEBAGAI DEFAULT & BAHASA MELAYU)
+         ***********************************************************************/
+        const I18N = {
+            en: {
+                langBadge: 'EN | BM',
+                previewTitle: '✨ Live 3D Character Preview',
+                previewSub: 'Watch your character update live on the field!',
+                builderTitle: 'Build 3D Character',
+                builderSub: 'Chinese Unit 12: 饮食 (Food & Drinks)',
+                builderTip: 'Your 3D model is shown live! Customize your style before starting.',
+                lblName: '1. Student Name:',
+                namePlaceholder: 'e.g., Ahmad / Mei Ling',
+                defaultPlayerName: 'Star Student',
+                lblShirt: '2. 3D Jersey Color:',
+                lblSkin: '3. Character Skin Tone:',
+                lblHat: '4. Head Style / 3D Accessory:',
+                hatCap: '🧢 Sports Cap',
+                hatHair: '💇 Spiky Hair',
+                hatBand: '🎽 Headband',
+                lblSlipper: '5. Your Striker Slipper Color:',
+                btnStartGame: '🚀 START GAME (8 QUESTIONS)',
+                hudTitle: 'Tuju Selipar 3D',
+                hudSub: '3-Slipper Pyramid • Chinese Unit 12',
+                btnChar: 'Character',
+                lblRound: 'Question',
+                lblScore: 'Score',
+                btnNotes: 'Unit 12 Notes',
+                dragAim: 'Drag Screen to Aim:',
+                aimCenter: (v) => `Dead Center (${v}°)`,
+                aimLeft: (v) => `Left (${v}°)`,
+                aimRight: (v) => `Right (+${v}°)`,
+                powerReady: '⚡ Power: Ready (Hold Button)',
+                powerOptimal: (v) => `⚡ Power: ${v}% (Optimal Zone!)`,
+                powerLow: (v) => `⚡ Power: ${v}% (Weak)`,
+                powerHigh: (v) => `⚡ Power: ${v}% (Too Strong)`,
+                sweetSpot: 'OPTIMAL',
+                btnHoldRelease: 'HOLD & RELEASE',
+                btnReleaseNow: 'RELEASE = THROW!',
+                hit3Title: '🎯BULLSEYE! ALL KNOCKED DOWN!',
+                hit2Title: '⚡ GREAT THROW! ALMOST ALL!',
+                hit1Title: '💨 GRAZED THE PYRAMID!',
+                hit0Title: '👟 NICE TRY! GROUND TREMOR!',
+                hitSub: (count, pts) => `${count} Slippers Knocked Down! (+${pts} Base Points)`,
+                quizShoeBadge: (count) => `🩴 ${count} Slippers Knocked Down!`,
+                quizProgressBadge: (r, total) => `Question ${r} / ${total}`,
+                quizBaseLbl: 'Base Throw Score',
+                quizBasePoints: (pts) => `+${pts} Points`,
+                catDrink: 'Drink Pattern (喝 hē)',
+                catFood: 'Food Pattern (吃 chī)',
+                btnListen: 'Listen',
+                qMeaningDrink: 'Question Meaning: "What do you want to drink?"',
+                qMeaningFood: 'Question Meaning: "What do you want to eat?"',
+                engBoxBadge: '🇬🇧 English Translation Box',
+                translateInstruction: 'Translate into Chinese:',
+                chooseInstruction: '👇 Choose the Correct Chinese Answer (with Pinyin):',
+                feedbackCorrectTitle: (pts) => `🎉 Correct! Score Doubled x2 (+${pts} Points)!`,
+                feedbackWrongTitle: (pts) => `❌ Not Quite! You Keep Base Score (+${pts} Points)`,
+                feedbackCorrectAnswerPrefix: 'Correct Answer:',
+                btnNextQuestion: (next, total) => `Continue to Question ${next} / ${total} ➔`,
+                btnFinishGame: 'Finish & View Score Card 🏆',
+                vocabTitle: '📖 Chinese Unit 12 Vocabulary List (8 Words)',
+                vocabSub: 'Click any card to listen to the Mandarin pronunciation',
+                patternDrink: 'Drink Pattern (喝 hē - Drink)',
+                patternFood: 'Food Pattern (吃 chī - Eat)',
+                btnCloseNotes: 'Close Notes',
+                cardHeader: 'OFFICIAL SCORE CARD • UNIT 12',
+                congrats: 'Congratulations',
+                summarySub: 'You have completed all 8 unique Unit 12 questions.',
+                totalScoreLbl: 'Total Overall Score',
+                accuracyLbl: 'Quiz Accuracy',
+                accuracyDisplay: (c, total) => `${Math.round((c / total) * 100)}% Correct Answers`,
+                btnSaveCard: 'Save Score Card (Download PNG)',
+                lbTitle: 'Top Leaderboard',
+                btnReview: '📖 Review Notes',
+                btnPlayAgain: '🔄 Play Again'
+            },
+            ms: {
+                langBadge: 'BM | EN',
+                previewTitle: '✨ Pratonton Karakter 3D Anda',
+                previewSub: 'Lihat perubahan secara langsung di padang!',
+                builderTitle: 'Bina Karakter 3D',
+                builderSub: 'Bahasa Cina Unit 12: 饮食 (Makanan & Minuman)',
+                builderTip: 'Model 3D anda sedang dipaparkan secara langsung! Sesuaikan gaya sebelum mula.',
+                lblName: '1. Nama Murid:',
+                namePlaceholder: 'Contoh: Ahmad / Mei Ling',
+                defaultPlayerName: 'Murid Cemerlang',
+                lblShirt: '2. Warna Baju Sukan 3D:',
+                lblSkin: '3. Tona Kulit Karakter:',
+                lblHat: '4. Gaya Kepala / Aksesori 3D:',
+                hatCap: '🧢 Topi Sukan',
+                hatHair: '💇 Rambut Cacak',
+                hatBand: '🎽 Cekak Sukan',
+                lblSlipper: '5. Warna Selipar Pelontar Anda:',
+                btnStartGame: '🚀 MULA BERMAIN (8 SOALAN)',
+                hudTitle: 'Tuju Selipar 3D',
+                hudSub: 'Susunan Piramid 3 Selipar • Bahasa Cina Unit 12',
+                btnChar: 'Karakter',
+                lblRound: 'Soalan',
+                lblScore: 'Skor',
+                btnNotes: 'Nota Unit 12',
+                dragAim: 'Seret Skrin (Sasaran):',
+                aimCenter: (v) => `Tepat Tengah (${v}°)`,
+                aimLeft: (v) => `Kiri (${v}°)`,
+                aimRight: (v) => `Right (+${v}°)`,
+                powerReady: '⚡ Kuasa: Sedia (Tahan Butang)',
+                powerOptimal: (v) => `⚡ Kuasa: ${v}% (Zon Padu!)`,
+                powerLow: (v) => `⚡ Kuasa: ${v}% (Perlahan)`,
+                powerHigh: (v) => `⚡ Kuasa: ${v}% (Terlajak Kuat)`,
+                sweetSpot: 'PADU',
+                btnHoldRelease: 'TAHAN & LEPAS',
+                btnReleaseNow: 'LEPAS = BALING!',
+                hit3Title: '🎯 BALINGAN TEPAT! HABIS TUMBANG!',
+                hit2Title: '⚡ BALINGAN HAMPIR TEPAT!',
+                hit1Title: '💨 TERKENA SIPI!',
+                hit0Title: '👟 CUBA LAGI! GEGARAN PADANG!',
+                hitSub: (count, pts) => `${count} Selipar Tumbang! (+${pts} Markah Asas)`,
+                quizShoeBadge: (count) => `🩴 ${count} Selipar Tumbang!`,
+                quizProgressBadge: (r, total) => `Soalan ${r} / ${total}`,
+                quizBaseLbl: 'Markah Asas Lontaran',
+                quizBasePoints: (pts) => `+${pts} Mata`,
+                catDrink: 'Pola Minuman (喝 hē)',
+                catFood: 'Pola Makanan (吃 chī)',
+                btnListen: 'Dengar',
+                qMeaningDrink: 'Maksud Soalan: "Awak hendak minum apa?"',
+                qMeaningFood: 'Maksud Soalan: "Awak hendak makan apa?"',
+                engBoxBadge: '🇬🇧 Kotak Terjemahan Inggeris',
+                translateInstruction: 'Terjemahkan ke Bahasa Cina:',
+                chooseInstruction: '👇 Pilih Jawapan Bahasa Cina (Dilengkapi Pinyin) Yang Tepat:',
+                feedbackCorrectTitle: (pts) => `🎉 Tepat Sekali! Markah Digandakan x2 (+${pts} Mata)!`,
+                feedbackWrongTitle: (pts) => `❌ Kurang Tepat! Anda Kekal Markah Asas (+${pts} Mata)`,
+                feedbackCorrectAnswerPrefix: 'Jawapan betul:',
+                btnNextQuestion: (next, total) => `Teruskan Ke Soalan ${next} / ${total} ➔`,
+                btnFinishGame: 'Tamat & Lihat Kad Skor 🏆',
+                vocabTitle: '📖 Senarai 8 Kosa Kata Bahasa Cina (Unit 12)',
+                vocabSub: 'Klik pada mana-mana kad untuk mendengar sebutan audio Mandarin',
+                patternDrink: 'Pola Minuman (喝 hē - Minum)',
+                patternFood: 'Pola Makanan (吃 chī - Makan)',
+                btnCloseNotes: 'Tutup Nota',
+                cardHeader: 'KAD SKOR RASMI • UNIT 12',
+                congrats: 'Tahniah',
+                summarySub: 'Anda telah melengkapkan kesemua 8 soalan berbeza Unit 12.',
+                totalScoreLbl: 'Jumlah Skor Keseluruhan',
+                accuracyLbl: 'Ketepatan Kuiz',
+                accuracyDisplay: (c, total) => `${Math.round((c / total) * 100)}% Jawapan Tepat`,
+                btnSaveCard: 'Simpan Kad Skor (Muat Turun PNG)',
+                lbTitle: 'Papan Pendahulu (Leaderboard)',
+                btnReview: '📖 Ulang Kaji Nota',
+                btnPlayAgain: '🔄 Main Semula'
+            }
+        };
+
+        function t() {
+            return I18N[gameState.lang] || I18N.en;
+        }
+
+        function toggleLanguage() {
+            gameState.lang = gameState.lang === 'en' ? 'ms' : 'en';
+            applyLanguageUI();
+        }
+
+        function applyLanguageUI() {
+            const langObj = t();
+            document.querySelectorAll('.lang-toggle-label').forEach(el => {
+                el.textContent = gameState.lang.toUpperCase();
+            });
+
+            const setTxt = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setTxt('i18n-preview-title', langObj.previewTitle);
+            setTxt('i18n-preview-sub', langObj.previewSub);
+            setTxt('i18n-builder-title', langObj.builderTitle);
+            setTxt('i18n-builder-sub', langObj.builderSub);
+            setTxt('i18n-builder-tip', langObj.builderTip);
+            setTxt('i18n-lbl-name', langObj.lblName);
+            const nameInp = document.getElementById('input-player-name');
+            if (nameInp) nameInp.placeholder = langObj.namePlaceholder;
+
+            setTxt('i18n-lbl-shirt', langObj.lblShirt);
+            setTxt('i18n-lbl-skin', langObj.lblSkin);
+            setTxt('i18n-lbl-hat', langObj.lblHat);
+            setTxt('i18n-hat-cap', langObj.hatCap);
+            setTxt('i18n-hat-hair', langObj.hatHair);
+            setTxt('i18n-hat-band', langObj.hatBand);
+            setTxt('i18n-lbl-slipper', langObj.lblSlipper);
+            setTxt('btn-start-game', langObj.btnStartGame);
+
+            setTxt('i18n-hud-title', langObj.hudTitle);
+            setTxt('i18n-hud-sub', langObj.hudSub);
+            setTxt('i18n-btn-char', langObj.btnChar);
+            setTxt('i18n-lbl-round', langObj.lblRound);
+            setTxt('i18n-lbl-score', langObj.lblScore);
+            setTxt('i18n-btn-notes', langObj.btnNotes);
+            setTxt('i18n-drag-aim', langObj.dragAim);
+            setTxt('i18n-sweet-spot', langObj.sweetSpot);
+
+            if (!gameState.isCharging) {
+                setTxt('btn-throw-text', langObj.btnHoldRelease);
+            } else {
+                setTxt('btn-throw-text', langObj.btnReleaseNow);
+            }
+
+            setTxt('i18n-quiz-base-lbl', langObj.quizBaseLbl);
+            setTxt('i18n-btn-listen', langObj.btnListen);
+            setTxt('i18n-eng-box-badge', langObj.engBoxBadge);
+            setTxt('i18n-translate-instruction', langObj.translateInstruction);
+            setTxt('i18n-choose-instruction', langObj.chooseInstruction);
+
+            setTxt('i18n-vocab-title', langObj.vocabTitle);
+            setTxt('i18n-vocab-sub', langObj.vocabSub);
+            setTxt('i18n-pattern-drink', langObj.patternDrink);
+            setTxt('i18n-pattern-food', langObj.patternFood);
+            setTxt('i18n-btn-close-notes', langObj.btnCloseNotes);
+
+            setTxt('i18n-card-header', langObj.cardHeader);
+            setTxt('i18n-congrats', langObj.congrats);
+            setTxt('i18n-summary-sub', langObj.summarySub);
+            setTxt('i18n-total-score-lbl', langObj.totalScoreLbl);
+            setTxt('i18n-accuracy-lbl', langObj.accuracyLbl);
+            setTxt('i18n-btn-save-card', langObj.btnSaveCard);
+            setTxt('i18n-lb-title', langObj.lbTitle);
+            setTxt('i18n-btn-review', langObj.btnReview);
+            setTxt('i18n-btn-play-again', langObj.btnPlayAgain);
+
+            updateCharacterPreview();
+            updateAimAndPowerHUD();
+            populateVocabModal();
+        }
+
+        /***********************************************************************
+         * 1. PANGKALAN DATA 8 JAWAPAN BERBEZA BAHASA CINA (UNIT 12: MAKANAN & MINUMAN)
+         ***********************************************************************/
+        const UNIT12_VOCAB = [
+            // 4 MINUMAN (喝 - hē)
+            {
+                id: 'milk',
+                type: 'drink',
+                hanzi: '牛奶',
+                pinyin: 'niúnǎi',
+                rubyItem: '<ruby>牛<rt>niú</rt></ruby><ruby>奶<rt>nǎi</rt></ruby>',
+                en: 'milk',
+                ms: 'susu',
+                icon: '🥛',
+                fullHanzi: '我要喝牛奶',
+                fullPinyin: 'Wǒ yào hē niúnǎi',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>喝<rt>hē</rt></ruby><ruby>牛<rt>niú</rt></ruby><ruby>奶<rt>nǎi</rt></ruby>',
+                promptEn: 'What do you want to drink? I want to drink milk.',
+                promptMs: 'Saya hendak minum susu.'
+            },
+            {
+                id: 'juice',
+                type: 'drink',
+                hanzi: '果汁',
+                pinyin: 'guǒzhī',
+                rubyItem: '<ruby>果<rt>guǒ</rt></ruby><ruby>汁<rt>zhī</rt></ruby>',
+                en: 'fruit juice',
+                ms: 'jus buah',
+                icon: '🧃',
+                fullHanzi: '我要喝果汁',
+                fullPinyin: 'Wǒ yào hē guǒzhī',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>喝<rt>hē</rt></ruby><ruby>果<rt>guǒ</rt></ruby><ruby>汁<rt>zhī</rt></ruby>',
+                promptEn: 'What do you want to drink? I want to drink fruit juice.',
+                promptMs: 'Saya hendak minum jus buah.'
+            },
+            {
+                id: 'tea',
+                type: 'drink',
+                hanzi: '茶',
+                pinyin: 'chá',
+                rubyItem: '<ruby>茶<rt>chá</rt></ruby>',
+                en: 'tea',
+                ms: 'teh',
+                icon: '🍵',
+                fullHanzi: '我要喝茶',
+                fullPinyin: 'Wǒ yào hē chá',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>喝<rt>hē</rt></ruby><ruby>茶<rt>chá</rt></ruby>',
+                promptEn: 'What do you want to drink? I want to drink tea.',
+                promptMs: 'Saya hendak minum teh.'
+            },
+            {
+                id: 'water',
+                type: 'drink',
+                hanzi: '水',
+                pinyin: 'shuǐ',
+                rubyItem: '<ruby>水<rt>shuǐ</rt></ruby>',
+                en: 'water',
+                ms: 'air',
+                icon: '💧',
+                fullHanzi: '我要喝水',
+                fullPinyin: 'Wǒ yào hē shuǐ',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>喝<rt>hē</rt></ruby><ruby>水<rt>shuǐ</rt></ruby>',
+                promptEn: 'What do you want to drink? I want to drink water.',
+                promptMs: 'Saya hendak minum air.'
+            },
+            // 4 MAKANAN (吃 - chī)
+            {
+                id: 'bread',
+                type: 'food',
+                hanzi: '面包',
+                pinyin: 'miànbāo',
+                rubyItem: '<ruby>面<rt>miàn</rt></ruby><ruby>包<rt>bāo</rt></ruby>',
+                en: 'bread',
+                ms: 'roti',
+                icon: '🍞',
+                fullHanzi: '我要吃面包',
+                fullPinyin: 'Wǒ yào chī miànbāo',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>吃<rt>chī</rt></ruby><ruby>面<rt>miàn</rt></ruby><ruby>包<rt>bāo</rt></ruby>',
+                promptEn: 'What do you want to eat? I want to eat bread.',
+                promptMs: 'Saya hendak makan roti.'
+            },
+            {
+                id: 'rice',
+                type: 'food',
+                hanzi: '米饭',
+                pinyin: 'mǐfàn',
+                rubyItem: '<ruby>米<rt>mǐ</rt></ruby><ruby>饭<rt>fàn</rt></ruby>',
+                en: 'rice',
+                ms: 'nasi',
+                icon: '🍚',
+                fullHanzi: '我要吃米饭',
+                fullPinyin: 'Wǒ yào chī mǐfàn',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>吃<rt>chī</rt></ruby><ruby>米<rt>mǐ</rt></ruby><ruby>饭<rt>fàn</rt></ruby>',
+                promptEn: 'What do you want to eat? I want to eat rice.',
+                promptMs: 'Saya hendak makan nasi.'
+            },
+            {
+                id: 'chicken',
+                type: 'food',
+                hanzi: '鸡肉',
+                pinyin: 'jīròu',
+                rubyItem: '<ruby>鸡<rt>jī</rt></ruby><ruby>肉<rt>ròu</rt></ruby>',
+                en: 'chicken',
+                ms: 'ayam',
+                icon: '🍗',
+                fullHanzi: '我要吃鸡肉',
+                fullPinyin: 'Wǒ yào chī jīròu',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>吃<rt>chī</rt></ruby><ruby>鸡<rt>jī</rt></ruby><ruby>肉<rt>ròu</rt></ruby>',
+                promptEn: 'What do you want to eat? I want to eat chicken.',
+                promptMs: 'Saya hendak makan ayam.'
+            },
+            {
+                id: 'cake',
+                type: 'food',
+                hanzi: '蛋糕',
+                pinyin: 'dàngāo',
+                rubyItem: '<ruby>蛋<rt>dàn</rt></ruby><ruby>糕<rt>gāo</rt></ruby>',
+                en: 'cake',
+                ms: 'kek',
+                icon: '🍰',
+                fullHanzi: '我要吃蛋糕',
+                fullPinyin: 'Wǒ yào chī dàngāo',
+                fullRuby: '<ruby>我<rt>Wǒ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>吃<rt>chī</rt></ruby><ruby>蛋<rt>dàn</rt></ruby><ruby>糕<rt>gāo</rt></ruby>',
+                promptEn: 'What do you want to eat? I want to eat cake.',
+                promptMs: 'Saya hendak makan kek.'
+            }
+        ];
+
+        /***********************************************************************
+         * 2. KEADAAN PERMAINAN (GAME STATE) & PROFIL KARAKTER 3D MURID
+         ***********************************************************************/
+        const TOTAL_ROUNDS = 8; // 8 Jawapan Berbeza
+        let gameState = {
+            lang: 'en',        // Default bahasa sistem ialah English ('en' | 'ms')
+            phase: 'BUILDER', // 'BUILDER' | 'AIM' | 'THROWING' | 'QUIZ' | 'SUMMARY'
+            round: 1,
+            totalScore: 0,
+            correctQuizCount: 0,
+            aimAngle: 0,       // -28 to +28 darjah (Dilaras terus pada skrin)
+            throwPower: 75,    // 20% to 100% (Optimum: 65% - 85%)
+            isCharging: false, // Sama ada murid sedang menekan/hold butang bulat selipar
+            chargeDir: 1,      // Arah turun/naik kuasa semasa hold
+            fallenCount: 0,
+            roundBaseScore: 0,
+            currentQuestion: null,
+            questionDeck: [],
+            isMuted: false,
+            player: {
+                name: 'Star Student',
+                shirtColor: 0xef4444,
+                skinColor: 0xfbbf24,
+                hatStyle: 'cap',
+                slipperColor: 0x2563eb
+            }
+        };
+
+        /***********************************************************************
+         * 3. SISTEM AUDIO WEB & SEBUTAN MANDARIN
+         ***********************************************************************/
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSoundEffect(type) {
+            if (gameState.isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+
+                if (type === 'whoosh') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(620, now + 0.16);
+                    osc.frequency.exponentialRampToValueAtTime(140, now + 0.35);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.36);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.36);
+                } else if (type === 'hit') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(48, now + 0.24);
+                    gain.gain.setValueAtTime(0.42, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'correct') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.2, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.075 + 0.26);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.28);
+                    });
+                } else if (type === 'wrong') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(190, now);
+                    osc.frequency.linearRampToValueAtTime(125, now + 0.32);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.34);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.34);
+                }
+            } catch (e) {}
+        }
+
+        function speakMandarin(text) {
+            if (gameState.isMuted) return;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = 'zh-CN';
+                    utter.rate = 0.88;
+                    window.speechSynthesis.speak(utter);
+                }
+            } catch (e) {}
+        }
+
+        function speakCurrentQuestion() {
+            if (!gameState.currentQuestion) return;
+            const qText = gameState.currentQuestion.type === 'drink' ? '你要喝什么？' : '你要吃什么？';
+            speakMandarin(qText);
+        }
+
+        function toggleMute() {
+            gameState.isMuted = !gameState.isMuted;
+            document.getElementById('btn-audio-toggle').textContent = gameState.isMuted ? '🔇' : '🔊';
+            if (gameState.isMuted && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        /***********************************************************************
+         * 4. PEMBINAAN OBJEK 3D: SELIPAR JEPUN, SUSUNAN PIRAMID GAMBAR & KARAKTER MURID
+         ***********************************************************************/
+        let scene, camera, renderer;
+        let pyramidSlippers = [];
+        let strikerSlipper = null;
+        let playerCharacterGroup = null;
+        let rightArmPivot = null;
+        let trajectoryDots = [];
+
+        let throwAnim = {
+            active: false,
+            progress: 0,
+            startPos: new THREE.Vector3(0, 0.35, 10.2),
+            landingPos: new THREE.Vector3(0, 0.2, 0),
+            peakHeight: 2.2,
+            vel: new THREE.Vector3(),
+            rotVel: new THREE.Vector3(),
+            hitResolved: false
+        };
+
+        let camOrbit = {
+            isDragging: false,
+            prevX: 0,
+            prevY: 0,
+            azimuth: 0,
+            elevation: 0.34,
+            distance: 16.5,
+            target: new THREE.Vector3(0, 1.4, 3.2)
+        };
+
+        // Sasaran kamera semasa mod BINA KARAKTER vs mod BERMAIN
+        function syncCameraForPhase() {
+            if (!camera) return;
+            if (gameState.phase === 'BUILDER') {
+                // Fokus kamera secara dekat di hadapan karakter 3D murid supaya mudah dilihat semasa membina karakter
+                const charPos = new THREE.Vector3(-1.35, 1.35, 10.6);
+                const camPos = new THREE.Vector3(-0.35, 1.75, 14.2);
+                camera.position.copy(camPos);
+                camera.lookAt(charPos);
+            } else {
+                updateCameraTransform();
+            }
+        }
+
+        function initThreeScene() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x86efac);
+            scene.fog = new THREE.FogExp2(0xbbf7d0, 0.014);
+
+            camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 200);
+            syncCameraForPhase();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Pencahayaan Matahari Semula Jadi di Padang Rumput
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+            sunLight.position.set(12, 24, 15);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            const d = 16;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            buildGrassEnvironment();
+            buildSlipperPyramid();
+            buildPlayerCharacter3D();
+            buildTrajectoryArcDots();
+            updateTrajectoryArcVisual();
+
+            setupDirectScreenAiming(renderer.domElement);
+            setupHoldToThrowButton();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // Persekitaran Padang Rumput Semula Jadi + Daun Kering (Seperti Gambar Rujukan)
+        function buildGrassEnvironment() {
+            const grassGeo = new THREE.PlaneGeometry(120, 120);
+            const grassMat = new THREE.MeshLambertMaterial({ color: 0x4d7c0f });
+            const grass = new THREE.Mesh(grassGeo, grassMat);
+            grass.rotation.x = -Math.PI / 2;
+            grass.receiveShadow = true;
+            scene.add(grass);
+
+            // Tompokan rumput & daun kering di sekitar padang (seperti dalam foto)
+            const leafColors = [0x65a30d, 0x3f6212, 0xa16207, 0x854d0e, 0xca8a04];
+            for (let i = 0; i < 95; i++) {
+                const isLeaf = i % 3 === 0;
+                const geo = isLeaf 
+                    ? new THREE.BoxGeometry(0.32, 0.02, 0.18) 
+                    : new THREE.CylinderGeometry(0.03, 0.08, 0.25, 5);
+                const mat = new THREE.MeshLambertMaterial({ color: leafColors[i % leafColors.length] });
+                const mesh = new THREE.Mesh(geo, mat);
+                const rx = (Math.random() - 0.5) * 24;
+                const rz = (Math.random() - 0.5) * 24;
+                mesh.position.set(rx, isLeaf ? 0.02 : 0.12, rz);
+                mesh.rotation.y = Math.random() * Math.PI;
+                if (isLeaf) mesh.rotation.z = (Math.random() - 0.5) * 0.2;
+                scene.add(mesh);
+            }
+
+            // Bulatan Sasaran Susunan Selipar
+            const ringGeo = new THREE.RingGeometry(1.9, 2.08, 40);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(0, 0.03, 0);
+            scene.add(ring);
+
+            // Garisan Pembaling
+            const lineGeo = new THREE.BoxGeometry(6, 0.04, 0.16);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const throwLine = new THREE.Mesh(lineGeo, lineMat);
+            throwLine.position.set(0, 0.03, 10.5);
+            scene.add(throwLine);
+        }
+
+        /**
+         * Membina 3D Selipar Jepun Sebenar (Bentuk Tapak Membujur + Tali Y-Strap)
+         */
+        function createRealFlipFlopMesh(topSoleColor, bottomRubberColor, strapColor) {
+            const flipFlop = new THREE.Group();
+
+            // Lukis bentuk tapak selipar melengkung (Heel lebih tirus, bahagian jari lebih lebar)
+            const shape = new THREE.Shape();
+            shape.moveTo(0, -1.15);
+            shape.bezierCurveTo(0.46, -1.15, 0.50, -0.5, 0.44, 0.1);
+            shape.bezierCurveTo(0.55, 0.65, 0.52, 1.15, 0.0, 1.18);
+            shape.bezierCurveTo(-0.52, 1.15, -0.55, 0.65, -0.44, 0.1);
+            shape.bezierCurveTo(-0.50, -0.5, -0.46, -1.15, 0, -1.15);
+
+            // Lapisan Bawah Getah (Outsole)
+            const bottomExtrude = new THREE.ExtrudeGeometry(shape, {
+                depth: 0.09,
+                bevelEnabled: true,
+                bevelSegments: 2,
+                steps: 1,
+                bevelSize: 0.03,
+                bevelThickness: 0.03
+            });
+            bottomExtrude.rotateX(Math.PI / 2);
+            const bottomMat = new THREE.MeshStandardMaterial({ color: bottomRubberColor, roughness: 0.85 });
+            const bottomMesh = new THREE.Mesh(bottomExtrude, bottomMat);
+            bottomMesh.position.y = 0.04;
+            bottomMesh.castShadow = true;
+            bottomMesh.receiveShadow = true;
+            flipFlop.add(bottomMesh);
+
+            // Lapisan Atas Tapak (Footbed berwarna seperti biru gelap/kelabu dalam gambar)
+            const topExtrude = new THREE.ExtrudeGeometry(shape, {
+                depth: 0.06,
+                bevelEnabled: true,
+                bevelSegments: 2,
+                steps: 1,
+                bevelSize: 0.02,
+                bevelThickness: 0.02
+            });
+            topExtrude.rotateX(Math.PI / 2);
+            const topMat = new THREE.MeshStandardMaterial({ color: topSoleColor, roughness: 0.6 });
+            const topMesh = new THREE.Mesh(topExtrude, topMat);
+            topMesh.position.y = 0.11;
+            topMesh.castShadow = true;
+            topMesh.receiveShadow = true;
+            flipFlop.add(topMesh);
+
+            // Tiang Tengah Tali Selipar (Toe Post antara ibu jari & jari kedua)
+            const postGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.28, 10);
+            const strapMat = new THREE.MeshStandardMaterial({ color: strapColor, roughness: 0.4 });
+            const postMesh = new THREE.Mesh(postGeo, strapMat);
+            postMesh.position.set(0, 0.22, 0.56);
+            flipFlop.add(postMesh);
+
+            // Tali Selipar Bentuk V / Y (Kiri & Kanan melengkung ke tapak tengah)
+            [-1, 1].forEach((side) => {
+                const curve = new THREE.QuadraticBezierCurve3(
+                    new THREE.Vector3(0, 0.34, 0.56),               // Puncak Toe Post
+                    new THREE.Vector3(side * 0.30, 0.38, 0.22),     // Lengkungan atas kaki
+                    new THREE.Vector3(side * 0.43, 0.10, -0.18)     // Lekapan tepi tapak
+                );
+                const tubeGeo = new THREE.TubeGeometry(curve, 14, 0.048, 8, false);
+                const strapSideMesh = new THREE.Mesh(tubeGeo, strapMat);
+                strapSideMesh.castShadow = true;
+                flipFlop.add(strapSideMesh);
+            });
+
+            return flipFlop;
+        }
+
+        /**
+         * Menyusun 3 Selipar Mengikut Gambar Rujukan (Piramid / Tepee 3 Selipar Bersandar):
+         * - Selipar Kiri: Condong ke dalam dari kiri
+         * - Selipar Kanan: Condong ke dalam dari kanan
+         * - Selipar Depan (Biru Gelap): Bersandar tegak menghadap pemain di bahagian hadapan
+         */
+        function buildSlipperPyramid() {
+            pyramidSlippers.forEach(s => scene.remove(s.mesh));
+            pyramidSlippers = [];
+
+            const configs = [
+                {
+                    // Selipar Kiri (Tapak hijau gelap/kelabu, tali kuning/hijau)
+                    id: 'left',
+                    topColor: 0x334155,
+                    bottomColor: 0xd6d3d1,
+                    strapColor: 0xca8a04,
+                    pos: new THREE.Vector3(-0.62, 1.02, -0.08),
+                    rot: new THREE.Euler(0.12, 0.35, -0.92)
+                },
+                {
+                    // Selipar Kanan (Tapak kelabu/coklat, tali jingga/merah)
+                    id: 'right',
+                    topColor: 0x475569,
+                    bottomColor: 0xe7e5e4,
+                    strapColor: 0xea580c,
+                    pos: new THREE.Vector3(0.62, 1.02, -0.08),
+                    rot: new THREE.Euler(0.12, -0.35, 0.92)
+                },
+                {
+                    // Selipar Hadapan (Tapak biru gelap, tali kelabu/kuning menghadap kamera seperti gambar)
+                    id: 'front',
+                    topColor: 0x1e3a8a,
+                    bottomColor: 0xa8a29e,
+                    strapColor: 0x94a3b8,
+                    pos: new THREE.Vector3(0, 1.04, 0.44),
+                    rot: new THREE.Euler(-1.05, 0, 0)
+                }
+            ];
+
+            configs.forEach((cfg) => {
+                const mesh = createRealFlipFlopMesh(cfg.topColor, cfg.bottomColor, cfg.strapColor);
+                mesh.scale.set(1.12, 1.12, 1.12);
+                mesh.position.copy(cfg.pos);
+                mesh.rotation.copy(cfg.rot);
+                scene.add(mesh);
+
+                pyramidSlippers.push({
+                    id: cfg.id,
+                    mesh: mesh,
+                    homePos: cfg.pos.clone(),
+                    homeRot: cfg.rot.clone(),
+                    vel: new THREE.Vector3(),
+                    rotVel: new THREE.Vector3(),
+                    isDynamic: false
+                });
+            });
+
+            // Bina Selipar Pelontar (Striker Flip-Flop)
+            rebuildStrikerSlipper();
+        }
+
+        function rebuildStrikerSlipper() {
+            if (strikerSlipper) scene.remove(strikerSlipper);
+            strikerSlipper = createRealFlipFlopMesh(
+                gameState.player.slipperColor,
+                0xfef08a,
+                0xffffff
+            );
+            strikerSlipper.scale.set(1.08, 1.08, 1.08);
+            resetStrikerPosition();
+            scene.add(strikerSlipper);
+        }
+
+        /**
+         * Membina Karakter 3D Murid di Garisan Pembaling
+         */
+        function buildPlayerCharacter3D() {
+            if (playerCharacterGroup) scene.remove(playerCharacterGroup);
+
+            playerCharacterGroup = new THREE.Group();
+
+            const skinMat = new THREE.MeshStandardMaterial({ color: gameState.player.skinColor, roughness: 0.6 });
+            const shirtMat = new THREE.MeshStandardMaterial({ color: gameState.player.shirtColor, roughness: 0.5 });
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+
+            // Kaki Kiri & Kanan
+            [-0.22, 0.22].forEach(lx => {
+                const legGeo = new THREE.BoxGeometry(0.26, 0.75, 0.26);
+                const leg = new THREE.Mesh(legGeo, pantsMat);
+                leg.position.set(lx, 0.38, 0);
+                leg.castShadow = true;
+                playerCharacterGroup.add(leg);
+            });
+
+            // Badan / Baju Sukan
+            const torsoGeo = new THREE.BoxGeometry(0.78, 0.92, 0.44);
+            const torso = new THREE.Mesh(torsoGeo, shirtMat);
+            torso.position.set(0, 1.20, 0);
+            torso.castShadow = true;
+            playerCharacterGroup.add(torso);
+
+            // Kepala
+            const headGeo = new THREE.SphereGeometry(0.36, 20, 20);
+            const head = new THREE.Mesh(headGeo, skinMat);
+            head.position.set(0, 1.98, 0);
+            head.castShadow = true;
+            playerCharacterGroup.add(head);
+
+            // Mata (Menghadap sasaran)
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+            [-0.12, 0.12].forEach(ex => {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), eyeMat);
+                eye.position.set(ex, 2.02, -0.32);
+                playerCharacterGroup.add(eye);
+            });
+
+            // Aksesori Kepala / Rambut
+            if (gameState.player.hatStyle === 'cap') {
+                const capDome = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.38, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+                    shirtMat
+                );
+                capDome.position.set(0, 2.02, 0);
+                playerCharacterGroup.add(capDome);
+
+                const visor = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.06, 0.35), shirtMat);
+                visor.position.set(0, 2.04, -0.34);
+                playerCharacterGroup.add(visor);
+            } else if (gameState.player.hatStyle === 'hair') {
+                const hairMat = new THREE.MeshStandardMaterial({ color: 0x1c1917 });
+                for (let i = -1; i <= 1; i++) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.38, 6), hairMat);
+                    spike.position.set(i * 0.14, 2.38, 0);
+                    spike.rotation.z = -i * 0.25;
+                    playerCharacterGroup.add(spike);
+                }
+            } else if (gameState.player.hatStyle === 'headband') {
+                const band = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.37, 0.37, 0.12, 20),
+                    shirtMat
+                );
+                band.position.set(0, 2.12, 0);
+                playerCharacterGroup.add(band);
+            }
+
+            // Tangan Kiri
+            const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.72, 0.22), skinMat);
+            leftArm.position.set(-0.52, 1.18, 0);
+            leftArm.castShadow = true;
+            playerCharacterGroup.add(leftArm);
+
+            // Tangan Kanan (Dengan Pivot Bahu untuk Animasi Melontar Selipar)
+            rightArmPivot = new THREE.Group();
+            rightArmPivot.position.set(0.52, 1.52, 0);
+            const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.72, 0.22), skinMat);
+            rightArm.position.set(0, -0.32, 0);
+            rightArm.castShadow = true;
+            rightArmPivot.add(rightArm);
+            playerCharacterGroup.add(rightArmPivot);
+
+            // Kedudukan Karakter di Garisan Pembaling sebelah kanan sedikit supaya tidak menghalang pandangan
+            playerCharacterGroup.position.set(-1.35, 0, 10.6);
+            scene.add(playerCharacterGroup);
+        }
+
+        /**
+         * Membina Titik-Titik Garisan Trajektori 3D (Aim & Power Preview)
+         */
+        function buildTrajectoryArcDots() {
+            trajectoryDots.forEach(d => scene.remove(d));
+            trajectoryDots = [];
+
+            const numDots = 18;
+            for (let i = 0; i < numDots; i++) {
+                const radius = i === numDots - 1 ? 0.22 : 0.10;
+                const geo = new THREE.SphereGeometry(radius, 10, 10);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: i === numDots - 1 ? 0xef4444 : 0xfef08a,
+                    transparent: true,
+                    opacity: 0.85
+                });
+                const dot = new THREE.Mesh(geo, mat);
+                scene.add(dot);
+                trajectoryDots.push(dot);
+            }
+        }
+
+        function computeLandingPosition(aimDeg, powerPct) {
+            const rad = THREE.MathUtils.degToRad(aimDeg);
+            // Pada kuasa 75%, jarak lontaran tepat mengenai piramid selipar (z = 0) dari z = 10.2
+            const distance = (powerPct / 75) * 10.2;
+            const landX = Math.sin(rad) * distance;
+            const landZ = 10.2 - Math.cos(rad) * distance;
+            return new THREE.Vector3(landX, 0.15, landZ);
+        }
+
+        function updateTrajectoryArcVisual() {
+            if (!trajectoryDots.length) return;
+            const showArc = gameState.phase === 'AIM';
+            const start = throwAnim.startPos;
+            const end = computeLandingPosition(gameState.aimAngle, gameState.throwPower);
+            const peakH = 1.2 + (gameState.throwPower / 100) * 1.8;
+
+            trajectoryDots.forEach((dot, idx) => {
+                dot.visible = showArc;
+                if (!showArc) return;
+                const t = (idx + 1) / trajectoryDots.length;
+                dot.position.lerpVectors(start, end, t);
+                dot.position.y += Math.sin(t * Math.PI) * peakH;
+            });
+
+            // Pusingkan selipar pelontar & karakter mengikut sudut sasaran
+            if (strikerSlipper && gameState.phase === 'AIM') {
+                strikerSlipper.rotation.y = -THREE.MathUtils.degToRad(gameState.aimAngle);
+            }
+            if (playerCharacterGroup) {
+                playerCharacterGroup.rotation.y = -THREE.MathUtils.degToRad(gameState.aimAngle * 0.6);
+            }
+        }
+
+        function resetStrikerPosition() {
+            throwAnim.active = false;
+            throwAnim.progress = 0;
+            throwAnim.hitResolved = false;
+            if (strikerSlipper) {
+                strikerSlipper.position.copy(throwAnim.startPos);
+                strikerSlipper.rotation.set(0.18, -THREE.MathUtils.degToRad(gameState.aimAngle), 0);
+            }
+            if (rightArmPivot) {
+                rightArmPivot.rotation.x = 0.35;
+            }
+        }
+
+        function resetPyramidPositions() {
+            pyramidSlippers.forEach(slipper => {
+                slipper.isDynamic = false;
+                slipper.vel.set(0, 0, 0);
+                slipper.rotVel.set(0, 0, 0);
+                slipper.mesh.position.copy(slipper.homePos);
+                slipper.mesh.rotation.copy(slipper.homeRot);
+            });
+            resetStrikerPosition();
+            updateTrajectoryArcVisual();
+        }
+
+        /***********************************************************************
+         * 5. FUNGSI PEMBINA KARAKTER & KAWALAN SLIDER AIM/KUASA
+         ***********************************************************************/
+        function selectCharColor(part, hexColor, btnEl) {
+            if (part === 'shirt') {
+                gameState.player.shirtColor = hexColor;
+                document.querySelectorAll('.color-btn-shirt').forEach(b => {
+                    b.className = 'color-btn-shirt w-9 h-9 rounded-xl border-2 border-white shadow-md transition ' + b.className.split(' ').find(c => c.startsWith('bg-'));
+                });
+                btnEl.classList.replace('border-2', 'border-4');
+                btnEl.classList.replace('border-white', 'border-slate-900');
+                btnEl.classList.add('scale-110');
+            } else if (part === 'skin') {
+                gameState.player.skinColor = hexColor;
+                document.querySelectorAll('.color-btn-skin').forEach(b => {
+                    b.className = 'color-btn-skin w-9 h-9 rounded-xl border-2 border-white shadow-md transition ' + b.className.split(' ').find(c => c.startsWith('bg-'));
+                });
+                btnEl.classList.replace('border-2', 'border-4');
+                btnEl.classList.replace('border-white', 'border-slate-900');
+                btnEl.classList.add('scale-110');
+            } else if (part === 'slipper') {
+                gameState.player.slipperColor = hexColor;
+                document.querySelectorAll('.color-btn-slipper').forEach(b => {
+                    b.className = 'color-btn-slipper w-9 h-9 rounded-xl border-2 border-white shadow-md transition ' + b.className.split(' ').find(c => c.startsWith('bg-'));
+                });
+                btnEl.classList.replace('border-2', 'border-4');
+                btnEl.classList.replace('border-white', 'border-slate-900');
+                btnEl.classList.add('scale-110');
+                rebuildStrikerSlipper();
+            }
+            buildPlayerCharacter3D();
+        }
+
+        function selectHatStyle(style, btnEl) {
+            gameState.player.hatStyle = style;
+            document.querySelectorAll('.hat-btn').forEach(b => {
+                b.className = 'hat-btn py-2 px-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-700 font-bold text-xs shadow-sm';
+            });
+            btnEl.className = 'hat-btn py-2 px-2.5 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-900 font-bold text-xs shadow-sm';
+            buildPlayerCharacter3D();
+        }
+
+        function updateCharacterPreview() {
+            const nameInputEl = document.getElementById('input-player-name');
+            const nameInput = nameInputEl ? nameInputEl.value.trim() : '';
+            gameState.player.name = nameInput || t().defaultPlayerName;
+            const badge = document.getElementById('hud-player-badge');
+            if (badge) badge.textContent = `👤 ${gameState.player.name}`;
+        }
+
+        function openBuilderModal() {
+            const modal = document.getElementById('builder-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            gameState.phase = 'BUILDER';
+            syncCameraForPhase();
+            updateTrajectoryArcVisual();
+        }
+
+        function startGameFromBuilder() {
+            updateCharacterPreview();
+            const modal = document.getElementById('builder-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            gameState.phase = 'AIM';
+            if (playerCharacterGroup) {
+                playerCharacterGroup.rotation.y = 0;
+            }
+            syncCameraForPhase();
+            updateAimAndPowerHUD();
+        }
+
+        function updateAimAndPowerHUD() {
+            const langObj = t();
+            const aimVal = Math.round(gameState.aimAngle);
+            const powerVal = Math.round(gameState.throwPower);
+
+            // Kemas kini Label Arah Sasaran
+            const aimLabel = document.getElementById('aim-label-val');
+            if (aimLabel) {
+                if (Math.abs(aimVal) <= 2) {
+                    aimLabel.textContent = langObj.aimCenter(aimVal);
+                    aimLabel.className = 'text-emerald-400';
+                } else if (aimVal < 0) {
+                    aimLabel.textContent = langObj.aimLeft(aimVal);
+                    aimLabel.className = 'text-sky-300';
+                } else {
+                    aimLabel.textContent = langObj.aimRight(aimVal);
+                    aimLabel.className = 'text-sky-300';
+                }
+            }
+
+            // Kemas kini Bar & Label Kuasa Lontaran
+            const pwrLabel = document.getElementById('power-label-val');
+            const fillEl = document.getElementById('power-charge-fill');
+            if (fillEl) {
+                fillEl.style.width = `${powerVal}%`;
+            }
+
+            if (pwrLabel) {
+                if (!gameState.isCharging && gameState.phase === 'AIM') {
+                    pwrLabel.textContent = langObj.powerReady;
+                    pwrLabel.className = 'text-amber-300 font-extrabold';
+                } else if (powerVal >= 65 && powerVal <= 85) {
+                    pwrLabel.textContent = langObj.powerOptimal(powerVal);
+                    pwrLabel.className = 'text-emerald-400 font-extrabold';
+                } else if (powerVal < 65) {
+                    pwrLabel.textContent = langObj.powerLow(powerVal);
+                    pwrLabel.className = 'text-amber-300 font-extrabold';
+                } else {
+                    pwrLabel.textContent = langObj.powerHigh(powerVal);
+                    pwrLabel.className = 'text-rose-400 font-extrabold';
+                }
+            }
+
+            updateTrajectoryArcVisual();
+        }
+
+        function setDirectAimAngle(newAngle) {
+            gameState.aimAngle = Math.max(-28, Math.min(28, newAngle));
+            updateAimAndPowerHUD();
+        }
+
+        /**
+         * Mekanisme Tahan & Lepas (Hold & Release) pada Butang Bulat Selipar
+         */
+        function setupHoldToThrowButton() {
+            const btn = document.getElementById('btn-throw');
+            if (!btn) return;
+
+            const startHold = (e) => {
+                e.preventDefault();
+                if (gameState.phase !== 'AIM' || gameState.isCharging) return;
+                gameState.isCharging = true;
+                gameState.throwPower = 20;
+                gameState.chargeDir = 1;
+
+                btn.classList.add('holding');
+                document.getElementById('throw-pulse-ring').classList.remove('opacity-0');
+                document.getElementById('btn-throw-text').textContent = t().btnReleaseNow;
+                updateAimAndPowerHUD();
+            };
+
+            const releaseHold = (e) => {
+                if (!gameState.isCharging) return;
+                if (e) e.preventDefault();
+                gameState.isCharging = false;
+
+                btn.classList.remove('holding');
+                document.getElementById('throw-pulse-ring').classList.add('opacity-0');
+                document.getElementById('btn-throw-text').textContent = t().btnHoldRelease;
+
+                if (gameState.phase === 'AIM') {
+                    handleThrowShoe();
+                }
+            };
+
+            btn.addEventListener('pointerdown', startHold);
+            window.addEventListener('pointerup', releaseHold);
+            window.addEventListener('pointercancel', releaseHold);
+        }
+
+        /***********************************************************************
+         * 6. MEKANISME LONTARAN SELIPAR & PERLANGGARAN PIRAMID 3 SELIPAR
+         ***********************************************************************/
+        function handleThrowShoe() {
+            if (gameState.phase !== 'AIM') return;
+            gameState.phase = 'THROWING';
+            updateTrajectoryArcVisual();
+
+            const btnThrow = document.getElementById('btn-throw');
+            btnThrow.disabled = true;
+            btnThrow.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Kira titik pendaratan berdasarkan Aim & Power yang dilaraskan oleh murid
+            const landing = computeLandingPosition(gameState.aimAngle, gameState.throwPower);
+            throwAnim.landingPos.copy(landing);
+            throwAnim.peakHeight = 1.2 + (gameState.throwPower / 100) * 1.8;
+            throwAnim.active = true;
+            throwAnim.progress = 0;
+            throwAnim.hitResolved = false;
+
+            // Kira jarak ralat dari pusat piramid (0, 0)
+            const distError = Math.hypot(landing.x, landing.z);
+            const langObj = t();
+
+            let fallCount = 0;
+            let bannerTitle = '';
+            let bannerColor = 'border-amber-400';
+
+            if (distError <= 1.45) {
+                fallCount = 3; // Kesemua 3 selipar piramid tumbang!
+                bannerTitle = langObj.hit3Title;
+                bannerColor = 'border-emerald-400';
+            } else if (distError <= 2.75) {
+                fallCount = 2; // 2 selipar tumbang
+                bannerTitle = langObj.hit2Title;
+                bannerColor = 'border-amber-400';
+            } else if (distError <= 4.2) {
+                fallCount = 1; // 1 selipar tumbang
+                bannerTitle = langObj.hit1Title;
+                bannerColor = 'border-sky-400';
+            } else {
+                fallCount = 1; // Beri sekurang-kurangnya 1 selipar tumbang (100 mata asas) supaya murid terus bersemangat menjawab kuiz
+                bannerTitle = langObj.hit0Title;
+                bannerColor = 'border-rose-400';
+            }
+
+            gameState.fallenCount = fallCount;
+            gameState.roundBaseScore = fallCount * 100;
+
+            playSoundEffect('whoosh');
+
+            setTimeout(() => {
+                showTransientBanner(
+                    bannerTitle,
+                    langObj.hitSub(fallCount, gameState.roundBaseScore),
+                    bannerColor
+                );
+            }, 420);
+
+            setTimeout(() => {
+                hideTransientBanner();
+                openMandarinQuizModal();
+            }, 1950);
+        }
+
+        function triggerPyramidCollapse(fallCount) {
+            playSoundEffect('hit');
+
+            // Susun selipar mengikut jarak terdekat dengan titik hentaman
+            const sorted = [...pyramidSlippers].sort((a, b) => {
+                return a.mesh.position.distanceTo(throwAnim.landingPos) - b.mesh.position.distanceTo(throwAnim.landingPos);
+            });
+
+            sorted.forEach((slipper, idx) => {
+                if (idx < fallCount) {
+                    slipper.isDynamic = true;
+                    const pushX = (slipper.mesh.position.x - throwAnim.landingPos.x) * 3.5 + (Math.random() - 0.5) * 4;
+                    const pushY = 3.2 + Math.random() * 2.8;
+                    const pushZ = -3.5 - Math.random() * 4.5;
+                    slipper.vel.set(pushX, pushY, pushZ);
+                    slipper.rotVel.set(
+                        (Math.random() - 0.5) * 14,
+                        (Math.random() - 0.5) * 14,
+                        (Math.random() - 0.5) * 14
+                    );
+                }
+            });
+
+            // Lantunan selipar pelontar selepas impak
+            throwAnim.vel.set((Math.random() - 0.5) * 3.5, 2.8, 1.8);
+            throwAnim.rotVel.set(9, 5, 6);
+        }
+
+        function updateScenePhysics(dt) {
+            // Animasi ayunan tangan karakter & penerbangan selipar
+            if (throwAnim.active && strikerSlipper) {
+                if (!throwAnim.hitResolved) {
+                    throwAnim.progress += dt * 2.5;
+                    const t = Math.min(1, throwAnim.progress);
+
+                    if (rightArmPivot) {
+                        rightArmPivot.rotation.x = 0.35 - Math.sin(t * Math.PI) * 1.8;
+                    }
+
+                    strikerSlipper.position.lerpVectors(throwAnim.startPos, throwAnim.landingPos, t);
+                    strikerSlipper.position.y += Math.sin(t * Math.PI) * throwAnim.peakHeight;
+                    strikerSlipper.rotation.x += dt * 16;
+                    strikerSlipper.rotation.z += dt * 8;
+
+                    if (t >= 1) {
+                        throwAnim.hitResolved = true;
+                        triggerPyramidCollapse(gameState.fallenCount);
+                    }
+                } else {
+                    throwAnim.vel.y -= 18 * dt;
+                    strikerSlipper.position.addScaledVector(throwAnim.vel, dt);
+                    strikerSlipper.rotation.x += throwAnim.rotVel.x * dt;
+                    strikerSlipper.rotation.z += throwAnim.rotVel.z * dt;
+
+                    if (strikerSlipper.position.y < 0.12) {
+                        strikerSlipper.position.y = 0.12;
+                        throwAnim.vel.y *= -0.35;
+                        throwAnim.vel.x *= 0.72;
+                        throwAnim.vel.z *= 0.72;
+                        throwAnim.rotVel.multiplyScalar(0.7);
+                    }
+                }
+            }
+
+            // Fizik selipar piramid yang tumbang
+            pyramidSlippers.forEach((slipper) => {
+                if (!slipper.isDynamic) return;
+                slipper.vel.y -= 18 * dt;
+                slipper.mesh.position.addScaledVector(slipper.vel, dt);
+                slipper.mesh.rotation.x += slipper.rotVel.x * dt;
+                slipper.mesh.rotation.y += slipper.rotVel.y * dt;
+                slipper.mesh.rotation.z += slipper.rotVel.z * dt;
+
+                if (slipper.mesh.position.y < 0.14) {
+                    slipper.mesh.position.y = 0.14;
+                    slipper.vel.y *= -0.38;
+                    slipper.vel.x *= 0.75;
+                    slipper.vel.z *= 0.75;
+                    slipper.rotVel.multiplyScalar(0.72);
+                }
+            });
+        }
+
+        function showTransientBanner(title, subtitle, borderClass) {
+            const banner = document.getElementById('status-banner');
+            const inner = document.getElementById('status-banner-inner');
+            document.getElementById('status-title').textContent = title;
+            document.getElementById('status-subtitle').textContent = subtitle;
+            inner.className = `bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-3xl shadow-2xl border-4 ${borderClass} text-center`;
+            banner.classList.remove('opacity-0', 'scale-75');
+            banner.classList.add('opacity-100', 'scale-100');
+        }
+
+        function hideTransientBanner() {
+            const banner = document.getElementById('status-banner');
+            banner.classList.remove('opacity-100', 'scale-100');
+            banner.classList.add('opacity-0', 'scale-75');
+        }
+
+        /***********************************************************************
+         * 7. MEKANISME KUIZ 8 SOALAN BERBEZA (DENGAN KOTAK BERASINGAN & BEBAS BUG)
+         ***********************************************************************/
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function prepareQuestionDeck() {
+            // Susun kesemua 8 item unik supaya tiada soalan berulang sepanjang 8 pusingan
+            gameState.questionDeck = shuffleArray(UNIT12_VOCAB);
+        }
+
+        function openMandarinQuizModal() {
+            gameState.phase = 'QUIZ';
+            const langObj = t();
+
+            // Ambil soalan mengikut indeks pusingan (1 hingga 8)
+            const targetVocab = gameState.questionDeck[gameState.round - 1] || UNIT12_VOCAB[0];
+            gameState.currentQuestion = targetVocab;
+
+            // Kemas kini Header Modal Kuiz
+            document.getElementById('quiz-shoe-badge').textContent = langObj.quizShoeBadge(gameState.fallenCount);
+            document.getElementById('quiz-progress-badge').textContent = langObj.quizProgressBadge(gameState.round, TOTAL_ROUNDS);
+            document.getElementById('quiz-base-points').textContent = langObj.quizBasePoints(gameState.roundBaseScore);
+
+            // Kemas kini Kotak 1 (Soalan Bahasa Cina) & Kotak 2 (English Translation Box)
+            const catBadge = document.getElementById('quiz-category-badge');
+            const qChinese = document.getElementById('quiz-chinese-question');
+            const qMeaning = document.getElementById('quiz-question-meaning');
+
+            if (targetVocab.type === 'drink') {
+                catBadge.textContent = langObj.catDrink;
+                qChinese.innerHTML = '<ruby>你<rt>Nǐ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>喝<rt>hē</rt></ruby><ruby>什<rt>shén</rt></ruby><ruby>么<rt>me</rt></ruby>？';
+                qMeaning.textContent = langObj.qMeaningDrink;
+            } else {
+                catBadge.textContent = langObj.catFood;
+                qChinese.innerHTML = '<ruby>你<rt>Nǐ</rt></ruby><ruby>要<rt>yào</rt></ruby><ruby>吃<rt>chī</rt></ruby><ruby>什<rt>shén</rt></ruby><ruby>么<rt>me</rt></ruby>？';
+                qMeaning.textContent = langObj.qMeaningFood;
+            }
+
+            // Kotak Berasingan untuk English Translation
+            document.getElementById('quiz-target-icon').textContent = targetVocab.icon;
+            document.getElementById('quiz-english-prompt').textContent = `"${targetVocab.promptEn}"`;
+            document.getElementById('quiz-malay-hint').textContent = `BM: ${targetVocab.promptMs}`;
+
+            // Bina 4 Pilihan Jawapan (1 Betul + 3 Pengganggu dilengkapi Pinyin)
+            const sameTypePool = UNIT12_VOCAB.filter(v => v.id !== targetVocab.id && v.type === targetVocab.type);
+            const otherTypePool = UNIT12_VOCAB.filter(v => v.id !== targetVocab.id && v.type !== targetVocab.type);
+            const distractors = [...shuffleArray(sameTypePool), ...shuffleArray(otherTypePool)].slice(0, 3);
+            const choices = shuffleArray([targetVocab, ...distractors]);
+
+            const gridEl = document.getElementById('quiz-options-grid');
+            gridEl.innerHTML = '';
+
+            choices.forEach((choice, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'option-card group relative flex items-center justify-between p-4 rounded-2xl border-2 border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/60 transition-all text-left shadow-sm hover:shadow-md cursor-pointer';
+                btn.dataset.id = choice.id;
+                btn.onclick = () => evaluateQuizChoice(choice, btn);
+
+                const optionLabels = ['A', 'B', 'C', 'D'];
+                // Tiada lagi ikon/gambar pada pilihan jawapan supaya murid membaca Hanzi & Pinyin sepenuhnya
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-8 h-8 rounded-xl bg-slate-200 group-hover:bg-blue-600 text-slate-700 group-hover:text-white font-black text-xs flex items-center justify-center shrink-0 transition">
+                            ${optionLabels[idx]}
+                        </span>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-black text-slate-800 group-hover:text-blue-700 leading-relaxed">
+                                ${choice.fullRuby}
+                            </div>
+                            <div class="text-xs font-semibold text-slate-500">
+                                ${choice.fullPinyin}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="w-7 h-7 rounded-full border-2 border-slate-300 group-hover:border-blue-500 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:text-blue-600">
+                        ➔
+                    </span>
+                `;
+                gridEl.appendChild(btn);
+            });
+
+            // Sembunyikan kotak maklum balas sehingga murid memilih jawapan
+            const feedbackBox = document.getElementById('quiz-feedback-box');
+            feedbackBox.className = 'hidden rounded-2xl p-4 border-2 transition-all';
+
+            const modal = document.getElementById('quiz-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            speakCurrentQuestion();
+        }
+
+        function evaluateQuizChoice(selectedVocab, clickedBtn) {
+            const target = gameState.currentQuestion;
+            const isCorrect = selectedVocab.id === target.id;
+            const langObj = t();
+
+            // Kunci semua butang pilihan dan tandakan jawapan betul dengan warna hijau
+            const allBtns = document.querySelectorAll('#quiz-options-grid button');
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:border-blue-500', 'hover:bg-blue-50/60', 'cursor-pointer');
+                if (btn.dataset.id === target.id) {
+                    btn.classList.remove('border-slate-200', 'bg-slate-50');
+                    btn.classList.add('border-emerald-500', 'bg-emerald-50');
+                }
+            });
+
+            speakMandarin(target.fullHanzi);
+
+            const feedbackBox = document.getElementById('quiz-feedback-box');
+            const headingEl = document.getElementById('feedback-heading');
+            const detailEl = document.getElementById('feedback-detail');
+            const nextBtn = document.getElementById('btn-next-round');
+
+            let earnedRoundScore = gameState.roundBaseScore;
+            const meaningText = gameState.lang === 'en' ? target.promptEn : target.promptMs;
+
+            if (isCorrect) {
+                playSoundEffect('correct');
+                earnedRoundScore = gameState.roundBaseScore * 2;
+                gameState.correctQuizCount++;
+
+                feedbackBox.className = 'rounded-2xl p-4 border-2 bg-emerald-50 border-emerald-400 text-emerald-950 block';
+                headingEl.innerHTML = langObj.feedbackCorrectTitle(earnedRoundScore);
+                detailEl.innerHTML = `<strong>${target.fullHanzi} (${target.fullPinyin})</strong> = "${meaningText}"`;
+            } else {
+                playSoundEffect('wrong');
+                clickedBtn.classList.remove('border-slate-200', 'bg-slate-50');
+                clickedBtn.classList.add('border-rose-500', 'bg-rose-50');
+
+                feedbackBox.className = 'rounded-2xl p-4 border-2 bg-rose-50 border-rose-400 text-rose-950 block';
+                headingEl.innerHTML = langObj.feedbackWrongTitle(earnedRoundScore);
+                detailEl.innerHTML = `${langObj.feedbackCorrectAnswerPrefix} <strong>${target.fullHanzi} (${target.fullPinyin})</strong> — "${meaningText}"`;
+            }
+
+            // Kemas kini jumlah skor keseluruhan
+            gameState.totalScore += earnedRoundScore;
+            const scoreEl = document.getElementById('hud-score');
+            scoreEl.textContent = gameState.totalScore;
+
+            // Pastikan butang "Soalan Seterusnya" sentiasa kelihatan dan skrol ke bawah secara automatik
+            nextBtn.textContent = gameState.round >= TOTAL_ROUNDS 
+                ? langObj.btnFinishGame 
+                : langObj.btnNextQuestion(gameState.round + 1, TOTAL_ROUNDS);
+
+            setTimeout(() => {
+                feedbackBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 80);
+        }
+
+        function proceedToNextRound() {
+            const quizModal = document.getElementById('quiz-modal');
+            quizModal.classList.add('hidden');
+            quizModal.classList.remove('flex');
+
+            if (gameState.round >= TOTAL_ROUNDS) {
+                showEndGameSummary();
+                return;
+            }
+
+            // Naikkan pusingan (1 sehingga 8)
+            gameState.round++;
+            document.getElementById('hud-round').textContent = `${gameState.round} / ${TOTAL_ROUNDS}`;
+
+            // Susun semula piramid 3 selipar & selipar pelontar
+            resetPyramidPositions();
+
+            // Aktifkan semula butang lontaran
+            const btnThrow = document.getElementById('btn-throw');
+            btnThrow.disabled = false;
+            btnThrow.classList.remove('opacity-50', 'cursor-not-allowed', 'holding');
+            document.getElementById('btn-throw-text').textContent = t().btnHoldRelease;
+
+            gameState.phase = 'AIM';
+            gameState.throwPower = 75;
+            updateAimAndPowerHUD();
+        }
+
+        function showEndGameSummary() {
+            gameState.phase = 'SUMMARY';
+            updateTrajectoryArcVisual();
+
+            document.getElementById('summary-player-name').textContent = gameState.player.name;
+            document.getElementById('final-score-display').textContent = gameState.totalScore;
+            document.getElementById('final-accuracy-display').textContent = t().accuracyDisplay(gameState.correctQuizCount, TOTAL_ROUNDS);
+
+            const summaryModal = document.getElementById('summary-modal');
+            summaryModal.classList.remove('hidden');
+            summaryModal.classList.add('flex');
+        }
+
+        function restartFullGame() {
+            const summaryModal = document.getElementById('summary-modal');
+            summaryModal.classList.add('hidden');
+            summaryModal.classList.remove('flex');
+
+            gameState.round = 1;
+            gameState.totalScore = 0;
+            gameState.correctQuizCount = 0;
+            prepareQuestionDeck();
+
+            document.getElementById('hud-round').textContent = `1 / ${TOTAL_ROUNDS}`;
+            document.getElementById('hud-score').textContent = '0';
+
+            resetPyramidPositions();
+
+            const btnThrow = document.getElementById('btn-throw');
+            btnThrow.disabled = false;
+            btnThrow.classList.remove('opacity-50', 'cursor-not-allowed', 'holding');
+            document.getElementById('btn-throw-text').textContent = t().btnHoldRelease;
+
+            gameState.phase = 'AIM';
+            gameState.throwPower = 75;
+            updateAimAndPowerHUD();
+        }
+
+        function showEndGameSummary() {
+            gameState.phase = 'SUMMARY';
+            updateTrajectoryArcVisual();
+
+            const nowStr = new Date().toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' });
+            document.getElementById('scorecard-date').textContent = nowStr;
+            document.getElementById('summary-player-name').textContent = gameState.player.name;
+            document.getElementById('final-score-display').textContent = gameState.totalScore;
+            document.getElementById('final-accuracy-number').textContent = `${gameState.correctQuizCount} / ${TOTAL_ROUNDS}`;
+            document.getElementById('final-accuracy-display').textContent = t().accuracyDisplay(gameState.correctQuizCount, TOTAL_ROUNDS);
+
+            // Tentukan Lencana Pencapaian
+            const rankBadge = document.getElementById('scorecard-rank-badge');
+            if (gameState.totalScore >= 3600) {
+                rankBadge.textContent = '🏆 Grandmaster Tuju Selipar';
+            } else if (gameState.totalScore >= 2400) {
+                rankBadge.textContent = '⭐ Sharp Striker';
+            } else {
+                rankBadge.textContent = '👏 Rising Star';
+            }
+
+            const summaryModal = document.getElementById('summary-modal');
+            summaryModal.classList.remove('hidden');
+            summaryModal.classList.add('flex');
+
+            // Hantar skor ke Leaderboard & Google Sheets
+            submitScoreToLeaderboard(
+                gameState.player.name,
+                gameState.totalScore,
+                `${gameState.correctQuizCount}/${TOTAL_ROUNDS}`
+            );
+        }
+
+        function restartFullGame() {
+            const summaryModal = document.getElementById('summary-modal');
+            summaryModal.classList.add('hidden');
+            summaryModal.classList.remove('flex');
+
+            gameState.round = 1;
+            gameState.totalScore = 0;
+            gameState.correctQuizCount = 0;
+            prepareQuestionDeck();
+
+            document.getElementById('hud-round').textContent = `1 / ${TOTAL_ROUNDS}`;
+            document.getElementById('hud-score').textContent = '0';
+
+            resetPyramidPositions();
+
+            const btnThrow = document.getElementById('btn-throw');
+            btnThrow.disabled = false;
+            btnThrow.classList.remove('opacity-50', 'cursor-not-allowed', 'holding');
+            document.getElementById('btn-throw-text').textContent = t().btnHoldRelease;
+
+            gameState.phase = 'AIM';
+            gameState.throwPower = 75;
+            updateAimAndPowerHUD();
+        }
+
+        /***********************************************************************
+         * 7B. JANA & SIMPAN KAD SKOR (DOWNLOAD PNG) + INTEGRASI GOOGLE SHEETS LEADERBOARD
+         ***********************************************************************/
+        function downloadScoreCardPNG() {
+            const canvas = document.getElementById('scorecard-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // Latar Belakang Kad Skor
+            const grad = ctx.createLinearGradient(0, 0, 800, 500);
+            grad.addColorStop(0, '#fffbeb');
+            grad.addColorStop(0.5, '#ffffff');
+            grad.addColorStop(1, '#ecfdf5');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 800, 500);
+
+            // Bingkai Emas
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 14;
+            ctx.strokeRect(12, 12, 776, 476);
+
+            // Jalur Header Atas
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(19, 19, 762, 78);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 26px Fredoka, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('🩴 TUJU SELIPAR 3D • OFFICIAL SCORE CARD', 42, 58);
+
+            ctx.font = 'bold 16px Fredoka, sans-serif';
+            ctx.fillStyle = '#fef3c7';
+            ctx.fillText('Chinese Year 2/3 Unit 12: 饮食 (Food & Drinks)', 42, 82);
+
+            const dateStr = new Date().toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' });
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Fredoka, sans-serif';
+            ctx.fillText(dateStr, 755, 65);
+
+            // Nama Murid
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 18px Fredoka, sans-serif';
+            ctx.fillText('STUDENT NAME / NAMA MURID', 400, 148);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 42px Fredoka, sans-serif';
+            ctx.fillText(gameState.player.name, 400, 195);
+
+            // Kotak Skor Keseluruhan (Kiri)
+            ctx.fillStyle = '#ecfdf5';
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 4;
+            ctx.fillRect(65, 230, 315, 165);
+            ctx.strokeRect(65, 230, 315, 165);
+
+            ctx.fillStyle = '#047857';
+            ctx.font = 'bold 18px Fredoka, sans-serif';
+            ctx.fillText('TOTAL SCORE / JUMLAH SKOR', 222, 268);
+
+            ctx.fillStyle = '#059669';
+            ctx.font = 'bold 64px Fredoka, sans-serif';
+            ctx.fillText(String(gameState.totalScore), 222, 338);
+
+            const rankText = document.getElementById('scorecard-rank-badge').textContent;
+            ctx.fillStyle = '#065f46';
+            ctx.font = 'bold 16px Fredoka, sans-serif';
+            ctx.fillText(rankText, 222, 375);
+
+            // Kotak Ketepatan Kuiz (Kanan)
+            ctx.fillStyle = '#f0f9ff';
+            ctx.strokeStyle = '#0ea5e9';
+            ctx.lineWidth = 4;
+            ctx.fillRect(420, 230, 315, 165);
+            ctx.strokeRect(420, 230, 315, 165);
+
+            ctx.fillStyle = '#0369a1';
+            ctx.font = 'bold 18px Fredoka, sans-serif';
+            ctx.fillText('QUIZ ACCURACY / KETEPATAN', 577, 268);
+
+            ctx.fillStyle = '#0284c7';
+            ctx.font = 'bold 58px Fredoka, sans-serif';
+            ctx.fillText(`${gameState.correctQuizCount} / ${TOTAL_ROUNDS}`, 577, 338);
+
+            const pct = Math.round((gameState.correctQuizCount / TOTAL_ROUNDS) * 100);
+            ctx.fillStyle = '#075985';
+            ctx.font = 'bold 16px Fredoka, sans-serif';
+            ctx.fillText(`${pct}% Mandarin Unit 12 Mastery`, 577, 375);
+
+            // Footer Sijil
+            ctx.fillStyle = '#475569';
+            ctx.font = 'bold 16px Fredoka, Noto Sans SC, sans-serif';
+            ctx.fillText('你要喝什么？我要喝牛奶 • 你要吃什么？我要吃面包', 400, 445);
+
+            // Muat turun sebagai fail PNG
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            const safeName = (gameState.player.name || 'Student').replace(/[^a-z0-9]/gi, '_');
+            link.download = `ScoreCard_TujuSelipar_${safeName}_${gameState.totalScore}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderLeaderboardUI(entries) {
+            const listEl = document.getElementById('leaderboard-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+
+            const sorted = [...entries].sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 15);
+
+            if (sorted.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-slate-400 text-center py-6">No records yet. Be the first!</div>`;
+                return;
+            }
+
+            sorted.forEach((item, index) => {
+                const rank = index + 1;
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+                const isCurrentPlayer = item.name === gameState.player.name && Number(item.score) === gameState.totalScore;
+
+                const row = document.createElement('div');
+                row.className = `flex items-center justify-between px-3.5 py-2.5 rounded-2xl border ${
+                    isCurrentPlayer
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-200'
+                        : 'bg-slate-800/80 border-slate-700/80 text-slate-200'
+                }`;
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="text-sm font-black w-7 text-center shrink-0">${medal}</span>
+                        <div class="truncate">
+                            <p class="text-xs sm:text-sm font-bold truncate">${item.name}</p>
+                            <p class="text-[10px] text-slate-400">Quiz: ${item.accuracy || '8/8'}</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-2">
+                        <span class="text-sm sm:text-base font-black text-emerald-400">${item.score}</span>
+                        <span class="text-[10px] text-slate-400 block">pts</span>
+                    </div>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        async function submitScoreToLeaderboard(name, score, accuracy) {
+            const statusEl = document.getElementById('leaderboard-status-text');
+            // Simpan dalam senarai sesi terlebih dahulu supaya terus terpapar
+            sessionLeaderboard.push({ name, score, accuracy });
+            renderLeaderboardUI(sessionLeaderboard);
+
+            if (statusEl) statusEl.textContent = '☁️ Saving score to Google Sheets...';
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ name, score, accuracy })
+                });
+                if (statusEl) statusEl.textContent = '✅ Saved to Google Sheets! Fetching rankings...';
+                setTimeout(() => fetchLeaderboardData(), 900);
+            } catch (err) {
+                if (statusEl) statusEl.textContent = '⚠️ Offline / Showing Session Leaderboard';
+            }
+        }
+
+        async function fetchLeaderboardData() {
+            const statusEl = document.getElementById('leaderboard-status-text');
+            if (statusEl) statusEl.textContent = '🔄 Loading Live Leaderboard...';
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL);
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    renderLeaderboardUI(data);
+                    if (statusEl) statusEl.textContent = '🟢 Live Google Sheets Leaderboard';
+                } else {
+                    renderLeaderboardUI(sessionLeaderboard);
+                    if (statusEl) statusEl.textContent = '🟢 Connected (Showing top scores)';
+                }
+            } catch (err) {
+                renderLeaderboardUI(sessionLeaderboard);
+                if (statusEl) statusEl.textContent = '🟢 Hall of Fame Leaderboard';
+            }
+        }
+
+        /***********************************************************************
+         * 8. MODAL NOTA KOSA KATA & KAWALAN SERETAN SKRIN (DIRECT AIMING)
+         ***********************************************************************/
+        function populateVocabModal() {
+            const grid = document.getElementById('vocab-list-grid');
+            grid.innerHTML = '';
+
+            UNIT12_VOCAB.forEach(item => {
+                const isDrink = item.type === 'drink';
+                const card = document.createElement('div');
+                card.className = `cursor-pointer rounded-2xl p-3 border-2 transition hover:shadow-md flex flex-col items-center text-center ${
+                    isDrink ? 'bg-sky-50/70 border-sky-200 hover:border-sky-400' : 'bg-amber-50/70 border-amber-200 hover:border-amber-400'
+                }`;
+                card.onclick = () => speakMandarin(item.fullHanzi);
+
+                card.innerHTML = `
+                    <span class="text-3xl mb-1">${item.icon}</span>
+                    <div class="text-2xl font-black text-slate-800">${item.rubyItem}</div>
+                    <div class="text-xs font-bold text-indigo-600 mt-0.5">${item.pinyin}</div>
+                    <div class="text-xs font-semibold text-slate-600 mt-1">${item.ms} (${item.en})</div>
+                    <div class="mt-2 text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                        🔊 ${item.fullHanzi}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleVocabModal(show) {
+            const modal = document.getElementById('vocab-modal');
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        /**
+         * Murid melaraskan sasaran (trajektori) secara terus dengan menyeret/menyentuh di skrin 3D
+         */
+        function setupDirectScreenAiming(domElem) {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const intersectPt = new THREE.Vector3();
+
+            const updateAimFromPointer = (clientX, clientY) => {
+                if (gameState.phase !== 'AIM') return;
+                mouse.x = (clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+
+                if (raycaster.ray.intersectPlane(groundPlane, intersectPt)) {
+                    // Kira sudut sasaran dari kedudukan selipar pelontar (0, 10.2) ke titik sentuhan di padang
+                    const dx = intersectPt.x - throwAnim.startPos.x;
+                    const dz = Math.max(2.0, throwAnim.startPos.z - intersectPt.z);
+                    const angleDeg = THREE.MathUtils.radToDeg(Math.atan2(dx, dz));
+                    setDirectAimAngle(angleDeg);
+                }
+            };
+
+            domElem.addEventListener('pointerdown', (e) => {
+                if (gameState.phase !== 'AIM') return;
+                camOrbit.isDragging = true;
+                camOrbit.prevX = e.clientX;
+                camOrbit.prevY = e.clientY;
+                updateAimFromPointer(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!camOrbit.isDragging || gameState.phase !== 'AIM') return;
+                updateAimFromPointer(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('pointerup', () => {
+                camOrbit.isDragging = false;
+            });
+        }
+
+        function updateCameraTransform() {
+            if (!camera) return;
+            const x = camOrbit.target.x + camOrbit.distance * Math.sin(camOrbit.azimuth) * Math.cos(camOrbit.elevation);
+            const y = camOrbit.target.y + camOrbit.distance * Math.sin(camOrbit.elevation);
+            const z = camOrbit.target.z + camOrbit.distance * Math.cos(camOrbit.azimuth) * Math.cos(camOrbit.elevation);
+            camera.position.set(x, y, z);
+            camera.lookAt(camOrbit.target);
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Sokongan Kekunci Papan Kekunci: Anak Panah Kiri/Kanan untuk Aim, Tahan & Lepas SPACE untuk Baling
+        window.addEventListener('keydown', (e) => {
+            if (gameState.phase !== 'AIM') return;
+            if (e.code === 'Space' && !e.repeat && !gameState.isCharging) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-throw');
+                btn.dispatchEvent(new PointerEvent('pointerdown'));
+            } else if (e.code === 'ArrowLeft') {
+                setDirectAimAngle(gameState.aimAngle - 2);
+            } else if (e.code === 'ArrowRight') {
+                setDirectAimAngle(gameState.aimAngle + 2);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && gameState.isCharging) {
+                e.preventDefault();
+                window.dispatchEvent(new PointerEvent('pointerup'));
+            }
+        });
+
+        // Gelung Animasi Utama
+        let lastFrameTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            // Putar karakter 3D perlahan-lahan semasa dalam mod BINA KARAKTER supaya murid dapat melihat model 3D mereka dengan jelas
+            if (gameState.phase === 'BUILDER' && playerCharacterGroup) {
+                playerCharacterGroup.rotation.y = Math.sin(now * 0.0018) * 0.65;
+            }
+
+            // Kemas kini kuasa balingan apabila murid sedang menahan (Hold) butang bulat selipar
+            if (gameState.phase === 'AIM' && gameState.isCharging) {
+                gameState.throwPower += gameState.chargeDir * dt * 95;
+                if (gameState.throwPower >= 100) {
+                    gameState.throwPower = 100;
+                    gameState.chargeDir = -1;
+                } else if (gameState.throwPower <= 20) {
+                    gameState.throwPower = 20;
+                    gameState.chargeDir = 1;
+                }
+                if (rightArmPivot) {
+                    // Tangan karakter menarik ke belakang mengikut tahap kuasa
+                    rightArmPivot.rotation.x = 0.35 + (gameState.throwPower / 100) * 1.1;
+                }
+                updateAimAndPowerHUD();
+            }
+
+            updateScenePhysics(dt);
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.onload = function () {
+            prepareQuestionDeck();
+            applyLanguageUI();
+            initThreeScene();
+            fetchLeaderboardData();
+            animate();
+        };
+    </script>
+</body>
+</html>
